@@ -1,0 +1,10 @@
+# ID fields are based at 500 
+*base 500
+       
+#name  rel-numb  type  comment
+#----  --------  ----  -------
+VORNAME  1     string
+NACHNAME 2     string 
+STRASSE  3     string 
+HAUSNUMMER 4   long
+WOHNORT  5     string

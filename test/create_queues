@@ -1,0 +1,36 @@
+#!/usr/bin/ksh
+
+#ipcrm_user $USER
+
+# remove old /Q
+echo "Removing old queues ........"
+(qmadmin > /dev/null  <<!
+ipcrm -f -y QSPACE
+
+q
+
+!
+)
+rm -f %%APPDIR%%/QFS
+
+# build new /Q
+echo "Building new queues ........"
+
+(qmadmin > /dev/null  <<!
+v
+ipcrm -f -y QSPACE
+crdl %%APPDIR%%/QFS 0 500
+qspacecreate QSPACE 76353 400 10 10 10 200 ERRQ n 16
+qopen QSPACE
+qcreate ERRQ fifo none 0 0 100% 0% 
+
+qcreate TOUPPER fifo none 0 0 100% 0 
+
+qcreate REPLYQ fifo none 0 0 100% 0 
+
+q
+
+!
+)
+
+exit 0

@@ -1,0 +1,10 @@
+rm -f %%APPDIR%%/TUXFS
+tmadmin -c > /dev/null  <<!
+crdl -z %%APPDIR%%/TUXFS 
+q
+!
+tmadmin  > /dev/null  <<!
+crlog -m simple
+q
+!
+echo "TLOG for master created"
