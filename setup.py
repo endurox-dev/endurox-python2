@@ -60,11 +60,11 @@ elif os.name == 'posix':
     library_dirs = [endurox_dir + '/lib', '/usr/lib']
 
     if ndrxversion < 7:
-	libraries = ['ndrx', 'tmib', 'qm', 'buft', 'ndrx2', 'ubf', 'ubf32', 'gp', '/usr/lib/libcrypt.a']
-	libraries_ws = ['wsc', 'buft', 'wsc', 'nws', 'nwi', 'nws', 'ubf', 'ubf32', 'gp', 'nsl', 'socket', '/usr/lib/libcrypt.a']
+	libraries = ['ndrx', 'tmib', 'qm', 'buft', 'ndrx2', 'ubf', 'ubf', 'gp', '/usr/lib/libcrypt.a']
+	libraries_ws = ['wsc', 'buft', 'wsc', 'nws', 'nwi', 'nws', 'ubf', 'ubf', 'gp', 'nsl', 'socket', '/usr/lib/libcrypt.a']
     else:
-	libraries = ['ndrx', 'tmib', 'buft', 'ubf', 'ubf32', '/usr/lib/libcrypt.a']
-	libraries_ws = ['wsc', 'tmib', 'buft', 'ubf', 'ubf32', 'gpnet', 'engine', 'dl', 'pthread', '/usr/lib/libcrypt.a']
+	libraries = ['ndrx', 'tmib', 'buft', 'ubf', 'ubf', '/usr/lib/libcrypt.a']
+	libraries_ws = ['wsc', 'tmib', 'buft', 'ubf', 'ubf', 'gpnet', 'engine', 'dl', 'pthread', '/usr/lib/libcrypt.a']
 	
 
 

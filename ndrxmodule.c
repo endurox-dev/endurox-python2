@@ -23,8 +23,7 @@
 #include "ubf.h"                /* ENDUROX Header File */
 #include <tpadm.h>		/* ENDUROX Header File */
 #include <userlog.h>            /* ENDUROX Header File */
-#include <ubf32.h>              /* ENDUROX Header File */
-#include <ubf1632.h>            /* ENDUROX Header File */
+#include <ubf.h>              /* ENDUROX Header File */
 
 #include <Python.h>
 
@@ -365,7 +364,7 @@ static char* transform_py_to_ndrx(PyObject* res_py) {
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   This function converts a ENDUROX typed buffer to the corresponding Python
-  types (string or dictionary). Currently, only STRING and UBF32 buffers
+  types (string or dictionary). Currently, only STRING and UBF buffers
   are allowed.
 
   PyObject* transform_ndrx_to_py  Return: Python object 
@@ -387,7 +386,7 @@ static PyObject* transform_ndrx_to_py(char* ndrxbuf) {
     }
 
 
-    if (!strcmp(buffer_type, "UBF32")) {
+    if (!strcmp(buffer_type, "UBF")) {
 	if ((obj = ubf_to_dict((UBFH*)ndrxbuf)) == NULL) {
 #ifdef DEBUG
 	    bprintf(stderr, "no ubf buffer\n");
@@ -544,7 +543,7 @@ ndrx_tpadmcall(PyObject * self, PyObject * args)
 
     tptypes(ndrxbuf, bubfname, NULL);
     
-    if (strcmp(bubfname, "UBF32") != 0) {
+    if (strcmp(bubfname, "UBF") != 0) {
       PyErr_SetString(PyExc_RuntimeError, "tpadmcall(): Must pass dictionary as the input buffer");
       goto leave_func;
     }
@@ -662,7 +661,7 @@ ndrx_tpgetrply(PyObject * self, PyObject * args)
     }	
 
     /* Buffer type will be changed by tpgetrply() if necessary */
-    if ((ndrxbuf = tpalloc("UBF32", NULL, NDRXBUFSIZE)) == NULL) {
+    if ((ndrxbuf = tpalloc("UBF", NULL, NDRXBUFSIZE)) == NULL) {
 	bprintf(stderr, "tpalloc(): %d - %s\n", tperrno, tpstrerror(tperrno));
 	goto leave_func;
     }
@@ -908,7 +907,7 @@ ndrx_tprecv(PyObject * self, PyObject * args)
     }
 
     /* Buffer type will be changed by tprecv() if necessary */
-    if ((ndrxbuf = tpalloc("UBF32", NULL, NDRXBUFSIZE)) == NULL) {
+    if ((ndrxbuf = tpalloc("UBF", NULL, NDRXBUFSIZE)) == NULL) {
 	bprintf(stderr, "tpalloc(): %d - %s\n", tperrno, tpstrerror(tperrno));
 	goto leave_func;
     }
@@ -1827,7 +1826,7 @@ ndrx_tpdequeue(PyObject * self, PyObject * args)
 	}
     } 
 
-    if ((ndrxbuf = tpalloc("UBF32", NULL, NDRXBUFSIZE) ) == NULL) {
+    if ((ndrxbuf = tpalloc("UBF", NULL, NDRXBUFSIZE) ) == NULL) {
 #ifdef DEBUG
 	    printf("%d : tpalloc failed\n", __LINE__);
 #endif
@@ -2226,7 +2225,7 @@ static void unsol_handler(char* ndrxbuf, long len, long flags) {
     PyObject* data_py = NULL;
 
     /* Transform the ENDUROX buffer to a Python type (len is not needed
-       (only STRING/UBF32 is supported), flags is not supported by ENDUROX */
+       (only STRING/UBF is supported), flags is not supported by ENDUROX */
 
     if ((data_py = transform_ndrx_to_py(ndrxbuf)) == NULL) {
 	bprintf(stderr, "transform_ndrx_to_py failed\n");

@@ -1,6 +1,6 @@
 /* 
    This file implements some functions to convert ENDUROX data types (STRING,
-   UBF32) to Python data types (string, dictionary) and vice versa 
+   UBF) to Python data types (string, dictionary) and vice versa 
 
    (c) 1999 Ralf Henschkowski (ralfh@gmx.ch)
 
@@ -9,8 +9,7 @@
 #include <stdio.h>
 
 #include <atmi.h>     /* ENDUROX Header File */
-#include <ubf32.h>    /* ENDUROX Header File */
-#include <ubf1632.h>  /* ENDUROX Header File */
+#include <ubf.h>    /* ENDUROX Header File */
 #include <userlog.h>  /* ENDUROX Header File */
 
 #include <Python.h>
@@ -130,7 +129,7 @@ UBFH* dict_to_ubf(PyObject* dict) {
     PyObject_Print(dict, stdout, 0);
     printf("\n");
 #endif
-    if ((ubf = (UBFH*)tpalloc("UBF32", NULL, NDRXBUFSIZE)) == NULL) {
+    if ((ubf = (UBFH*)tpalloc("UBF", NULL, NDRXBUFSIZE)) == NULL) {
 	bprintf(stderr, "tpalloc(): %s\n", tpstrerror(tperrno));
 	goto leave_func;
     }

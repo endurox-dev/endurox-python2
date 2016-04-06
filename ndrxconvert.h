@@ -1,6 +1,6 @@
 /* 
    This file decalres some functions to convert ENDUROX data types (STRING,
-   UBF32) to Python data types (string, dictionary) and vice versa 
+   UBF) to Python data types (string, dictionary) and vice versa 
 
    (c) 1999 Ralf Henschkowski (ralf@henschkowski.com)
 
@@ -13,8 +13,7 @@
 
 
 
-#include <ubf32.h>     /* ENDUROX Header File */
-#include <ubf1632.h>   /* ENDUROX Header File */
+#include <ubf.h>     /* ENDUROX Header File */
 
 
 #define NDRXBUFSIZE  16384*2
