@@ -1,7 +1,7 @@
 /* 
 
    This file implements a Python extension module for accessing the ATMI API of the
-   BEA TUXEDO Transaction Monitor system. It can be used to build clients or
+   BEA ENDUROX Transaction Monitor system. It can be used to build clients or
    servers in the Python language.  
    
    (c) 1999,2000 Ralf Henschkowski (ralfh@gmx.ch)
@@ -18,19 +18,19 @@
 #include <pthread.h>            /* System header file */  
 #endif /* USE_THREADS */
 
-#include <xa.h>                 /* TUXEDO Header File */
-#include <atmi.h>               /* TUXEDO Header File */
-#include "fml.h"                /* TUXEDO Header File */
-#include <tpadm.h>		/* TUXEDO Header File */
-#include <userlog.h>            /* TUXEDO Header File */
-#include <fml32.h>              /* TUXEDO Header File */
-#include <fml1632.h>            /* TUXEDO Header File */
+#include <xa.h>                 /* ENDUROX Header File */
+#include <atmi.h>               /* ENDUROX Header File */
+#include "ubf.h"                /* ENDUROX Header File */
+#include <tpadm.h>		/* ENDUROX Header File */
+#include <userlog.h>            /* ENDUROX Header File */
+#include <ubf32.h>              /* ENDUROX Header File */
+#include <ubf1632.h>            /* ENDUROX Header File */
 
 #include <Python.h>
 
 
-#include "tuxconvert.h"         /* Needed for some helper functions to convert Python 
-				   data types to TUXEDO data types and vice versa */
+#include "ndrxconvert.h"         /* Needed for some helper functions to convert Python 
+				   data types to ENDUROX data types and vice versa */
 
 
 /* }}} */
@@ -55,113 +55,113 @@ typedef struct {
 
 /* Forward declarions of local functions */
 
-#ifndef TUXWS
-void tuxedo_dispatch(TPSVCINFO * rqst);
-#endif /* not TUXWS */
+#ifndef NDRXWS
+void endurox_dispatch(TPSVCINFO * rqst);
+#endif /* not NDRXWS */
 
 extern void _set_XA_switch(struct xa_switch_t* new_xa_switch) ;
 
 static PyObject * makeargvobject(int argc, char** argv);
 static int find_entry(const char* name);
 static int find_free_entry(const char* name);
-static char* transform_py_to_tux(PyObject* res_py);
-static PyObject* transform_tux_to_py(char* tuxbuf);
-static PyObject* tux_tppost(PyObject* self, PyObject* arg);
-static PyObject* tux_tpsubscribe(PyObject* self, PyObject* arg);
-static PyObject* tux_tpunsubscribe(PyObject* self, PyObject* arg);
-static PyObject* tux_tpnotify(PyObject* self, PyObject* arg);
-static PyObject* tux_tpbroadcast(PyObject* self, PyObject* arg);
-static PyObject* tux_tpsetunsol(PyObject* self, PyObject* arg);
-static PyObject* tux_tpchkunsol(PyObject* self, PyObject* arg);
+static char* transform_py_to_ndrx(PyObject* res_py);
+static PyObject* transform_ndrx_to_py(char* ndrxbuf);
+static PyObject* ndrx_tppost(PyObject* self, PyObject* arg);
+static PyObject* ndrx_tpsubscribe(PyObject* self, PyObject* arg);
+static PyObject* ndrx_tpunsubscribe(PyObject* self, PyObject* arg);
+static PyObject* ndrx_tpnotify(PyObject* self, PyObject* arg);
+static PyObject* ndrx_tpbroadcast(PyObject* self, PyObject* arg);
+static PyObject* ndrx_tpsetunsol(PyObject* self, PyObject* arg);
+static PyObject* ndrx_tpchkunsol(PyObject* self, PyObject* arg);
 static void mainloop(int argc, char** argv);
-static PyObject * tux_tpcall(PyObject * self, PyObject * args);
-static PyObject * tux_tpacall(PyObject * self, PyObject * args);
-#ifndef TUXWS
-static PyObject * tux_tpadmcall(PyObject * self, PyObject * args);
-static PyObject * tux_tpforward(PyObject * self, PyObject * args);
-static PyObject * tux_mainloop(PyObject * self, PyObject * args);
-static PyObject* tux_tpadvertise(PyObject* self, PyObject* arg);
-static PyObject* tux_tpunadvertise(PyObject* self, PyObject* arg);
-static PyObject * tux_tpopen(PyObject * self, PyObject * args);
-static PyObject * tux_tpclose(PyObject * self, PyObject * args);
-#endif /* TUXWS */ 
-static PyObject * tux_tpgetrply(PyObject * self, PyObject * args);
-static PyObject * tux_tpconnect(PyObject * self, PyObject * args);
-static PyObject * tux_tpsend(PyObject * self, PyObject * args);
-static PyObject * tux_tprecv(PyObject * self, PyObject * args);
-static PyObject * tux_tpbegin(PyObject * self, PyObject * args);
-static PyObject * tux_tpcommit(PyObject * self, PyObject * args);
-static PyObject * tux_tpabort(PyObject * self, PyObject * args);
-static PyObject * tux_tpsuspend(PyObject * self, PyObject * args);
-static PyObject * tux_tpresume(PyObject * self, PyObject * args);
-static PyObject * tux_tpgetlev(PyObject * self, PyObject * args);
-static PyObject * tux_tpdiscon(PyObject * self, PyObject * args);
-static PyObject * tux_userlog(PyObject * self, PyObject * args);
+static PyObject * ndrx_tpcall(PyObject * self, PyObject * args);
+static PyObject * ndrx_tpacall(PyObject * self, PyObject * args);
+#ifndef NDRXWS
+static PyObject * ndrx_tpadmcall(PyObject * self, PyObject * args);
+static PyObject * ndrx_tpforward(PyObject * self, PyObject * args);
+static PyObject * ndrx_mainloop(PyObject * self, PyObject * args);
+static PyObject* ndrx_tpadvertise(PyObject* self, PyObject* arg);
+static PyObject* ndrx_tpunadvertise(PyObject* self, PyObject* arg);
+static PyObject * ndrx_tpopen(PyObject * self, PyObject * args);
+static PyObject * ndrx_tpclose(PyObject * self, PyObject * args);
+#endif /* NDRXWS */ 
+static PyObject * ndrx_tpgetrply(PyObject * self, PyObject * args);
+static PyObject * ndrx_tpconnect(PyObject * self, PyObject * args);
+static PyObject * ndrx_tpsend(PyObject * self, PyObject * args);
+static PyObject * ndrx_tprecv(PyObject * self, PyObject * args);
+static PyObject * ndrx_tpbegin(PyObject * self, PyObject * args);
+static PyObject * ndrx_tpcommit(PyObject * self, PyObject * args);
+static PyObject * ndrx_tpabort(PyObject * self, PyObject * args);
+static PyObject * ndrx_tpsuspend(PyObject * self, PyObject * args);
+static PyObject * ndrx_tpresume(PyObject * self, PyObject * args);
+static PyObject * ndrx_tpgetlev(PyObject * self, PyObject * args);
+static PyObject * ndrx_tpdiscon(PyObject * self, PyObject * args);
+static PyObject * ndrx_userlog(PyObject * self, PyObject * args);
 static void ins(PyObject *d, char *s, long x);
-static PyObject * tux_tpinit(PyObject * self, PyObject * args);
-#if TUXVERSION >= 7
-static PyObject * tux_tpgetctxt(PyObject * self, PyObject * args);
-static PyObject * tux_tpsetctxt(PyObject * self, PyObject * args);
-#endif /* TUXVERSION */
-static PyObject * tux_tpchkauth(PyObject * self, PyObject * args);
-static PyObject * tux_tpterm(PyObject * self, PyObject * args);
-static PyObject* tux_get_tpurcode(PyObject* self, PyObject * args);
-static PyObject* tux_set_tpurcode(PyObject* self, PyObject * args);
-static PyObject * tux_tpenqueue(PyObject * self, PyObject * args);
-static PyObject * tux_tpdequeue(PyObject * self, PyObject * args);
+static PyObject * ndrx_tpinit(PyObject * self, PyObject * args);
+#if NDRXVERSION >= 7
+static PyObject * ndrx_tpgetctxt(PyObject * self, PyObject * args);
+static PyObject * ndrx_tpsetctxt(PyObject * self, PyObject * args);
+#endif /* NDRXVERSION */
+static PyObject * ndrx_tpchkauth(PyObject * self, PyObject * args);
+static PyObject * ndrx_tpterm(PyObject * self, PyObject * args);
+static PyObject* ndrx_get_tpurcode(PyObject* self, PyObject * args);
+static PyObject* ndrx_set_tpurcode(PyObject* self, PyObject * args);
+static PyObject * ndrx_tpenqueue(PyObject * self, PyObject * args);
+static PyObject * ndrx_tpdequeue(PyObject * self, PyObject * args);
 
 /* }}} */
 /* {{{ local variables */
 
-static PyMethodDef tux_methods[] = {
-    {"tpinit",	         tux_tpinit,	    METH_VARARGS, "args: {usrname: '', clt=''}"},
-#if TUXVERSION >= 7
-    {"tpgetctxt",	 tux_tpgetctxt,	    METH_VARARGS, "args: {} -> context"},
-    {"tpsetctxt",	 tux_tpsetctxt,	    METH_VARARGS, "args: {context}"},
-#endif /* TUXVERSION */
-    {"tpterm",	         tux_tpterm,	    METH_VARARGS},
-    {"tpchkauth",	 tux_tpchkauth,	    METH_VARARGS},
-    {"tpcall",	         tux_tpcall,	    METH_VARARGS, "args: ('service', {args}|'args')"},
-    {"tpacall",	         tux_tpacall,	    METH_VARARGS, "args: ('service', {args}|'args') -> handle"},
-    {"tpconnect",	 tux_tpconnect,	    METH_VARARGS, "args: ('service', {args}|'args') -> handle"},
-    {"tpsend",           tux_tpsend,        METH_VARARGS, "args: (handle, input, [flags]) -> revent"},
-#ifndef TUXWS
-    {"tpadmcall",	 tux_tpadmcall,	    METH_VARARGS, "args: ({args}|'flags')"},
-    {"tpopen",           tux_tpopen,	    METH_VARARGS, ""},
-    {"tpclose",          tux_tpclose,	    METH_VARARGS, ""},
-    {"tpadvertise",      tux_tpadvertise,   METH_VARARGS},
-    {"tpunadvertise",    tux_tpunadvertise, METH_VARARGS},
-    {"mainloop",	 tux_mainloop,	    METH_VARARGS},
-    {"tpforward",	 tux_tpforward,	    METH_VARARGS, "args: ('service', {args}|'args')"},
-#endif /* TUXWS */
-    {"tpcommit",         tux_tpcommit,	    METH_VARARGS, ""},
-    {"tpabort",          tux_tpabort,	    METH_VARARGS, ""},
-    {"tpbegin",          tux_tpbegin,	    METH_VARARGS, "args: timeout"},
-    {"tpsuspend",        tux_tpsuspend,	    METH_VARARGS, ""},
-    {"tpresume",         tux_tpresume,	    METH_VARARGS, ""},
-    {"tpgetlev",         tux_tpgetlev,	    METH_VARARGS, ""},
-    {"tprecv",           tux_tprecv,	    METH_VARARGS, ""},
-    {"tpdiscon",	 tux_tpdiscon,	    METH_VARARGS, ""},
-    {"tpgetrply",	 tux_tpgetrply,	    METH_VARARGS, ""},
-    {"tpenqueue",	 tux_tpenqueue,	    METH_VARARGS, "args: ('qspace', 'qname', data, {qctl})"},
-    {"tpdequeue",	 tux_tpdequeue,	    METH_VARARGS, "args: ('qspace', 'qname', {qctl})"},
-    {"tppost",           tux_tppost,        METH_VARARGS},
-    {"tpsubscribe",      tux_tpsubscribe,   METH_VARARGS, "args: ('expr', 'filter', {evctl}) -> handle"},
-    {"tpunsubscribe",    tux_tpunsubscribe, METH_VARARGS, "args: (handle)"},
-    {"tpnotify",         tux_tpnotify,      METH_VARARGS},
-    {"tpbroadcast",      tux_tpbroadcast,   METH_VARARGS},
-    {"tpsetunsol",       tux_tpsetunsol,    METH_VARARGS},
-    {"tpchkunsol",       tux_tpchkunsol,    METH_VARARGS},
-    {"userlog",          tux_userlog,       METH_VARARGS},
-    {"get_tpurcode",     tux_get_tpurcode,  METH_VARARGS},
-    {"set_tpurcode",     tux_set_tpurcode,  METH_VARARGS},
+static PyMethodDef ndrx_methods[] = {
+    {"tpinit",	         ndrx_tpinit,	    METH_VARARGS, "args: {usrname: '', clt=''}"},
+#if NDRXVERSION >= 7
+    {"tpgetctxt",	 ndrx_tpgetctxt,	    METH_VARARGS, "args: {} -> context"},
+    {"tpsetctxt",	 ndrx_tpsetctxt,	    METH_VARARGS, "args: {context}"},
+#endif /* NDRXVERSION */
+    {"tpterm",	         ndrx_tpterm,	    METH_VARARGS},
+    {"tpchkauth",	 ndrx_tpchkauth,	    METH_VARARGS},
+    {"tpcall",	         ndrx_tpcall,	    METH_VARARGS, "args: ('service', {args}|'args')"},
+    {"tpacall",	         ndrx_tpacall,	    METH_VARARGS, "args: ('service', {args}|'args') -> handle"},
+    {"tpconnect",	 ndrx_tpconnect,	    METH_VARARGS, "args: ('service', {args}|'args') -> handle"},
+    {"tpsend",           ndrx_tpsend,        METH_VARARGS, "args: (handle, input, [flags]) -> revent"},
+#ifndef NDRXWS
+    {"tpadmcall",	 ndrx_tpadmcall,	    METH_VARARGS, "args: ({args}|'flags')"},
+    {"tpopen",           ndrx_tpopen,	    METH_VARARGS, ""},
+    {"tpclose",          ndrx_tpclose,	    METH_VARARGS, ""},
+    {"tpadvertise",      ndrx_tpadvertise,   METH_VARARGS},
+    {"tpunadvertise",    ndrx_tpunadvertise, METH_VARARGS},
+    {"mainloop",	 ndrx_mainloop,	    METH_VARARGS},
+    {"tpforward",	 ndrx_tpforward,	    METH_VARARGS, "args: ('service', {args}|'args')"},
+#endif /* NDRXWS */
+    {"tpcommit",         ndrx_tpcommit,	    METH_VARARGS, ""},
+    {"tpabort",          ndrx_tpabort,	    METH_VARARGS, ""},
+    {"tpbegin",          ndrx_tpbegin,	    METH_VARARGS, "args: timeout"},
+    {"tpsuspend",        ndrx_tpsuspend,	    METH_VARARGS, ""},
+    {"tpresume",         ndrx_tpresume,	    METH_VARARGS, ""},
+    {"tpgetlev",         ndrx_tpgetlev,	    METH_VARARGS, ""},
+    {"tprecv",           ndrx_tprecv,	    METH_VARARGS, ""},
+    {"tpdiscon",	 ndrx_tpdiscon,	    METH_VARARGS, ""},
+    {"tpgetrply",	 ndrx_tpgetrply,	    METH_VARARGS, ""},
+    {"tpenqueue",	 ndrx_tpenqueue,	    METH_VARARGS, "args: ('qspace', 'qname', data, {qctl})"},
+    {"tpdequeue",	 ndrx_tpdequeue,	    METH_VARARGS, "args: ('qspace', 'qname', {qctl})"},
+    {"tppost",           ndrx_tppost,        METH_VARARGS},
+    {"tpsubscribe",      ndrx_tpsubscribe,   METH_VARARGS, "args: ('expr', 'filter', {evctl}) -> handle"},
+    {"tpunsubscribe",    ndrx_tpunsubscribe, METH_VARARGS, "args: (handle)"},
+    {"tpnotify",         ndrx_tpnotify,      METH_VARARGS},
+    {"tpbroadcast",      ndrx_tpbroadcast,   METH_VARARGS},
+    {"tpsetunsol",       ndrx_tpsetunsol,    METH_VARARGS},
+    {"tpchkunsol",       ndrx_tpchkunsol,    METH_VARARGS},
+    {"userlog",          ndrx_userlog,       METH_VARARGS},
+    {"get_tpurcode",     ndrx_get_tpurcode,  METH_VARARGS},
+    {"set_tpurcode",     ndrx_set_tpurcode,  METH_VARARGS},
     {NULL,		 NULL,		    0}
 };
 
 /* static variables: only used in the server */
 
 
- /* Flag indicating that a server is running (in a TUXEDO sense) */
+ /* Flag indicating that a server is running (in a ENDUROX sense) */
 static int _server_is_running = 0;      
 
 /* Holds the urcode (user return code) to be returned with the next
@@ -179,7 +179,7 @@ static PyObject*  _server_obj = NULL;
 static PyObject*  _reloader_function = NULL;    
 
 /* Flag indicating that a tpforward() instead of a tpreturn() should be
-   used. See tux_tpforward() for details */
+   used. See ndrx_tpforward() for details */
 static int _forward = 0;
 
 /* Name of the service to which the request should be forwarded */
@@ -197,7 +197,7 @@ static PyObject * py_unsol_handler = NULL;
 
 /* **************************************** */
 /*                                          */
-/*     Definitions of local functions       */
+/*     Debinitions of local functions       */
 /*                                          */
 /* **************************************** */
 /* {{{ makeargvobject */
@@ -334,52 +334,52 @@ ins(PyObject *d, char *s, long x)
 
 /* }}} */
 
-/* {{{ transform_py_to_tux() */
+/* {{{ transform_py_to_ndrx() */
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   This function checks for the Python-type of its arguments and returns a
-  corresponding TUXEDO typed buffer. Currently, only strings or
+  corresponding ENDUROX typed buffer. Currently, only strings or
   dictionaries are allowed
 
-  char* transform_py_to_tux   Return: pointer to a TUXEDO typed buffer
+  char* transform_py_to_ndrx   Return: pointer to a ENDUROX typed buffer
 
   PyObject* res_py            Python object                             :IN
   +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 
-static char* transform_py_to_tux(PyObject* res_py) {
-    char* res_tux = NULL;
+static char* transform_py_to_ndrx(PyObject* res_py) {
+    char* res_ndrx = NULL;
     if (PyDict_Check(res_py)) {
-	res_tux = (char*)dict_to_fml(res_py);
+	res_ndrx = (char*)dict_to_ubf(res_py);
     } else if (PyString_Check(res_py)) {
-	res_tux = pystring_to_string(res_py);
+	res_ndrx = pystring_to_string(res_py);
     } else {
 	PyErr_SetString(PyExc_RuntimeError, "Only String or Dictionary arguments are allowed");
     }
-    return res_tux;
+    return res_ndrx;
 }    
 
 /* }}} */
-/* {{{ transform_tux_to_py() */
+/* {{{ transform_ndrx_to_py() */
 
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  This function converts a TUXEDO typed buffer to the corresponding Python
-  types (string or dictionary). Currently, only STRING and FML32 buffers
+  This function converts a ENDUROX typed buffer to the corresponding Python
+  types (string or dictionary). Currently, only STRING and UBF32 buffers
   are allowed.
 
-  PyObject* transform_tux_to_py  Return: Python object 
+  PyObject* transform_ndrx_to_py  Return: Python object 
 
-  char* tuxbuf                   pointer to a TUXEDO typed buffer         :IN
+  char* ndrxbuf                   pointer to a ENDUROX typed buffer         :IN
   +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 
-static PyObject* transform_tux_to_py(char* tuxbuf) {
+static PyObject* transform_ndrx_to_py(char* ndrxbuf) {
     char buffer_type[100] = "";
     char buffer_subtype[100] = "";
     PyObject* obj = NULL;
 
-    if (tptypes(tuxbuf, buffer_type, buffer_subtype) < 0) {
+    if (tptypes(ndrxbuf, buffer_type, buffer_subtype) < 0) {
 	char tmp[200] = "";
 	sprintf(tmp, "tptypes() : %d - %s", tperrno, tpstrerror(tperrno));
 	PyErr_SetString(PyExc_RuntimeError, tmp);
@@ -387,17 +387,17 @@ static PyObject* transform_tux_to_py(char* tuxbuf) {
     }
 
 
-    if (!strcmp(buffer_type, "FML32")) {
-	if ((obj = fml_to_dict((FBFR32*)tuxbuf)) == NULL) {
+    if (!strcmp(buffer_type, "UBF32")) {
+	if ((obj = ubf_to_dict((UBFH*)ndrxbuf)) == NULL) {
 #ifdef DEBUG
-	    fprintf(stderr, "no fml buffer\n");
+	    bprintf(stderr, "no ubf buffer\n");
 #endif
 	    goto leave_func;
 	}	
     } else if (!strcmp(buffer_type, "STRING")) {
-	if ((obj = string_to_pystring((char*)tuxbuf)) == NULL) {
+	if ((obj = string_to_pystring((char*)ndrxbuf)) == NULL) {
 #ifdef DEBUG
-	    fprintf(stderr, "no string buffer\n");
+	    bprintf(stderr, "no string buffer\n");
 #endif
 	    goto leave_func;
 	}	
@@ -414,13 +414,13 @@ static PyObject* transform_tux_to_py(char* tuxbuf) {
 
 /* }}} */
 
-#ifndef TUXWS
+#ifndef NDRXWS
 
 /* {{{ mainloop() */
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  This function is taken from the TUXEDO generated main. When called, the
-  server is under TUXEDO control and can process requests. This function
+  This function is taken from the ENDUROX generated main. When called, the
+  server is under ENDUROX control and can process requests. This function
   returns only when the server is shut down.
 
   int argc       # of command line arguments                            :IN
@@ -444,13 +444,13 @@ mainloop(int argc, char** argv) {
 /* }}} */
 
 
-#endif /* TUXWS */
+#endif /* NDRXWS */
 
 
-/* {{{ tux_tpcall() */
+/* {{{ ndrx_tpcall() */
 
 static PyObject * 
-tux_tpcall(PyObject * self, PyObject * args)
+ndrx_tpcall(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * input_py = NULL;
@@ -458,7 +458,7 @@ tux_tpcall(PyObject * self, PyObject * args)
     PyObject * service_py = NULL;
 
     char* service_name;
-    char* tuxbuf = NULL;
+    char* ndrxbuf = NULL;
     
     long outlen = 0;
     long flags = 0;
@@ -483,47 +483,47 @@ tux_tpcall(PyObject * self, PyObject * args)
 	}
     }
 
-    if ((tuxbuf = transform_py_to_tux(input_py)) == NULL) {
+    if ((ndrxbuf = transform_py_to_ndrx(input_py)) == NULL) {
 	goto leave_func;
     }
 #ifdef DEBUG
     {
-	char bufname[200] = "";
-	tptypes(tuxbuf, bufname, NULL);
-	fprintf(stderr, "calling tpcall(%s, [%s]...)\n", service_name, bufname);
+	char bubfname[200] = "";
+	tptypes(ndrxbuf, bubfname, NULL);
+	bprintf(stderr, "calling tpcall(%s, [%s]...)\n", service_name, bubfname);
     }
 #endif
     
-    if (tpcall(service_name, tuxbuf, 0, &tuxbuf, &outlen, flags ) < 0) {
+    if (tpcall(service_name, ndrxbuf, 0, &ndrxbuf, &outlen, flags ) < 0) {
 	char tmp[200] = "";
 	sprintf(tmp, "tpcall(): %d - %s", tperrno, tpstrerror(tperrno));
 	PyErr_SetString(PyExc_RuntimeError, tmp);
 	goto leave_func;
     }
     
-    if ((result = transform_tux_to_py(tuxbuf)) == NULL) {
+    if ((result = transform_ndrx_to_py(ndrxbuf)) == NULL) {
 	goto leave_func;
     }
 
  leave_func:
-    if (tuxbuf) tpfree(tuxbuf);
+    if (ndrxbuf) tpfree(ndrxbuf);
     return result;
 }
 
 /* }}} */
 
-#ifndef TUXWS
-/* {{{ tux_tpadmcall() */
+#ifndef NDRXWS
+/* {{{ ndrx_tpadmcall() */
 
 static PyObject * 
-tux_tpadmcall(PyObject * self, PyObject * args)
+ndrx_tpadmcall(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * input_py = NULL;
     PyObject * flags_py = NULL;
 
-    char bufname[200] = "";
-    char* tuxbuf = NULL;
+    char bubfname[200] = "";
+    char* ndrxbuf = NULL;
     
     long flags = 0;
 
@@ -538,13 +538,13 @@ tux_tpadmcall(PyObject * self, PyObject * args)
 	}
     }
 
-    if ((tuxbuf = transform_py_to_tux(input_py)) == NULL) {
+    if ((ndrxbuf = transform_py_to_ndrx(input_py)) == NULL) {
 	goto leave_func;
     }
 
-    tptypes(tuxbuf, bufname, NULL);
+    tptypes(ndrxbuf, bubfname, NULL);
     
-    if (strcmp(bufname, "FML32") != 0) {
+    if (strcmp(bubfname, "UBF32") != 0) {
       PyErr_SetString(PyExc_RuntimeError, "tpadmcall(): Must pass dictionary as the input buffer");
       goto leave_func;
     }
@@ -552,13 +552,13 @@ tux_tpadmcall(PyObject * self, PyObject * args)
 
 #ifdef DEBUG
     {
-	char bufname[200] = "";
-	tptypes(tuxbuf, bufname, NULL);
-	fprintf(stderr, "calling tpadmcall([%s]...)\n", bufname);
+	char bubfname[200] = "";
+	tptypes(ndrxbuf, bubfname, NULL);
+	bprintf(stderr, "calling tpadmcall([%s]...)\n", bubfname);
     }
 #endif
     
-    if (tpadmcall((FBFR32*)tuxbuf, (FBFR32**)&tuxbuf, flags ) < 0) {
+    if (tpadmcall((UBFH*)ndrxbuf, (UBFH**)&ndrxbuf, flags ) < 0) {
 	char tmp[200] = "";
 	sprintf(tmp, "tpadmcall(): %d - %s", tperrno, tpstrerror(tperrno));
 	PyErr_SetString(PyExc_RuntimeError, tmp);
@@ -567,24 +567,24 @@ tux_tpadmcall(PyObject * self, PyObject * args)
     
 
     
-    if ((result = transform_tux_to_py(tuxbuf)) == NULL) {
+    if ((result = transform_ndrx_to_py(ndrxbuf)) == NULL) {
 	goto leave_func;
     }
 
  leave_func:
-    if (tuxbuf) tpfree(tuxbuf);
+    if (ndrxbuf) tpfree(ndrxbuf);
     return result;
 }
 
 /* }}} */
 
-#endif /* TUXWS */
+#endif /* NDRXWS */
 
-/* {{{ tux_tpacall() */
+/* {{{ ndrx_tpacall() */
 
 
 static PyObject * 
-tux_tpacall(PyObject * self, PyObject * args)
+ndrx_tpacall(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * input_py = NULL;
@@ -593,7 +593,7 @@ tux_tpacall(PyObject * self, PyObject * args)
     
 
     char* service_name;
-    char* tuxbuf = NULL;
+    char* ndrxbuf = NULL;
     
     
     long flags = 0;
@@ -619,11 +619,11 @@ tux_tpacall(PyObject * self, PyObject * args)
 	}
     }
 
-    if ((tuxbuf = transform_py_to_tux(input_py)) == NULL) {
+    if ((ndrxbuf = transform_py_to_ndrx(input_py)) == NULL) {
 	goto leave_func;
     }
 
-    if ((handle = tpacall(service_name, tuxbuf, 0, flags)) < 0) {
+    if ((handle = tpacall(service_name, ndrxbuf, 0, flags)) < 0) {
       char tmp[200] = "";
       sprintf(tmp, "tpacall(): %d - %s", tperrno, tpstrerror(tperrno));
       PyErr_SetString(PyExc_RuntimeError, tmp);
@@ -638,20 +638,20 @@ tux_tpacall(PyObject * self, PyObject * args)
     }
 
  leave_func:
-    if (tuxbuf) tpfree(tuxbuf);
+    if (ndrxbuf) tpfree(ndrxbuf);
     return result;
 }
 
 /* }}} */
-/* {{{ tux_tpgetrply() */
+/* {{{ ndrx_tpgetrply() */
 
 static PyObject * 
-tux_tpgetrply(PyObject * self, PyObject * args)
+ndrx_tpgetrply(PyObject * self, PyObject * args)
 {
     PyObject * result    = NULL;
     PyObject * flags_py  = NULL;
 
-    char* tuxbuf       = NULL;
+    char* ndrxbuf       = NULL;
 
     int handle         = -1;
     long outlen        = 0;
@@ -662,8 +662,8 @@ tux_tpgetrply(PyObject * self, PyObject * args)
     }	
 
     /* Buffer type will be changed by tpgetrply() if necessary */
-    if ((tuxbuf = tpalloc("FML32", NULL, TUXBUFSIZE)) == NULL) {
-	fprintf(stderr, "tpalloc(): %d - %s\n", tperrno, tpstrerror(tperrno));
+    if ((ndrxbuf = tpalloc("UBF32", NULL, NDRXBUFSIZE)) == NULL) {
+	bprintf(stderr, "tpalloc(): %d - %s\n", tperrno, tpstrerror(tperrno));
 	goto leave_func;
     }
 
@@ -674,8 +674,8 @@ tux_tpgetrply(PyObject * self, PyObject * args)
 	}
     }
     
-    if (Finit32((FBFR32*)tuxbuf, TUXBUFSIZE) < 0) {
-	fprintf(stderr, "tpgetrply(): Finit32(): %s\n", Fstrerror(Ferror));
+    if (Binit((UBFH*)ndrxbuf, NDRXBUFSIZE) < 0) {
+	bprintf(stderr, "tpgetrply(): Binit(): %s\n", Bstrerror(Berror));
 	goto leave_func;
     }
 
@@ -683,32 +683,32 @@ tux_tpgetrply(PyObject * self, PyObject * args)
 	flags |= TPGETANY;
     }
 
-    if (tpgetrply(&handle, &tuxbuf, &outlen, flags) < 0) {
+    if (tpgetrply(&handle, &ndrxbuf, &outlen, flags) < 0) {
 	char tmp[200] = "";
 	sprintf(tmp, "tgetrply(): %d -  %s", tperrno, tpstrerror(tperrno));
 	PyErr_SetString(PyExc_RuntimeError, tmp);
 	goto leave_func;
     }
     
-    if ((result = transform_tux_to_py(tuxbuf)) == NULL) {
+    if ((result = transform_ndrx_to_py(ndrxbuf)) == NULL) {
 	goto leave_func;
     }
     
  leave_func:
-    if (tuxbuf) tpfree(tuxbuf);
+    if (ndrxbuf) tpfree(ndrxbuf);
     return result;
 }
 
 /* }}} */
 
-#ifndef TUXWS
-/* {{{ tux_tpforward() */
+#ifndef NDRXWS
+/* {{{ ndrx_tpforward() */
 
 static PyObject *
-tux_tpforward(PyObject * self, PyObject * args)
+ndrx_tpforward(PyObject * self, PyObject * args)
 {
 #ifdef DEBUG
-    printf("call tux_tpforward()\n");
+    printf("call ndrx_tpforward()\n");
     PyObject_Print(args, stdout, 0);
 #endif
 
@@ -726,11 +726,11 @@ tux_tpforward(PyObject * self, PyObject * args)
 }    
 
 /* }}} */
-#endif /* TUXWS */
-/* {{{ tux_tpconnect() */
+#endif /* NDRXWS */
+/* {{{ ndrx_tpconnect() */
 
 static PyObject * 
-tux_tpconnect(PyObject * self, PyObject * args)
+ndrx_tpconnect(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * input = NULL;
@@ -738,7 +738,7 @@ tux_tpconnect(PyObject * self, PyObject * args)
     PyObject * flags_py = NULL;
 
     char* service_name;
-    char* tuxbuf = NULL;
+    char* ndrxbuf = NULL;
     
     int handle = -1;
     long flags = 0;
@@ -764,13 +764,13 @@ tux_tpconnect(PyObject * self, PyObject * args)
 	goto leave_func;
     }
 
-    if ((tuxbuf = transform_py_to_tux(input)) == NULL) {
+    if ((ndrxbuf = transform_py_to_ndrx(input)) == NULL) {
 	goto leave_func;
     }
        
     /* int tpconnect(char *svc, char *data, long len, long flags) */
 
-    if ((handle = tpconnect(service_name, tuxbuf, 0, flags)) < 0) {
+    if ((handle = tpconnect(service_name, ndrxbuf, 0, flags)) < 0) {
 	char tmp[200] = "";
 	sprintf(tmp, "tpconnect(): %d - %s", tperrno, tpstrerror(tperrno));
 	PyErr_SetString(PyExc_RuntimeError, tmp);
@@ -779,15 +779,15 @@ tux_tpconnect(PyObject * self, PyObject * args)
     result = Py_BuildValue("l", (long)handle);
 
  leave_func:
-    if (tuxbuf) tpfree(tuxbuf);
+    if (ndrxbuf) tpfree(ndrxbuf);
     return result;
 }
 
 /* }}} */
-/* {{{ tux_tpdiscon() */
+/* {{{ ndrx_tpdiscon() */
 
 static PyObject * 
-tux_tpdiscon(PyObject * self, PyObject * args)
+ndrx_tpdiscon(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * handle_py = NULL;
@@ -819,17 +819,17 @@ tux_tpdiscon(PyObject * self, PyObject * args)
 }
 
 /* }}} */
-/* {{{ tux_tpsend() */
+/* {{{ ndrx_tpsend() */
 
 static PyObject * 
-tux_tpsend(PyObject * self, PyObject * args)
+ndrx_tpsend(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * input = NULL;
     PyObject * handle_py = NULL;
     PyObject * flags_py = NULL;
 
-    char* tuxbuf = NULL;
+    char* ndrxbuf = NULL;
     long revent = 0;
     int handle = -1;
     long flags = 0;
@@ -851,12 +851,12 @@ tux_tpsend(PyObject * self, PyObject * args)
 	}
     }
 
-    if ((tuxbuf = transform_py_to_tux(input)) == NULL) {
+    if ((ndrxbuf = transform_py_to_ndrx(input)) == NULL) {
 	goto leave_func;
     }
  
     /* int tpsend(int cd, char *data, long len, long flags, long *revent) */
-    if ((ret = tpsend(handle, tuxbuf, 0, flags, &revent)) < 0) {
+    if ((ret = tpsend(handle, ndrxbuf, 0, flags, &revent)) < 0) {
 	if (tperrno != TPEEVENT) {
 	    char tmp[200] = "";
 	    sprintf(tmp, "tpsend(): %d - %s, revent = %lu", tperrno, tpstrerror(tperrno), revent);
@@ -868,22 +868,22 @@ tux_tpsend(PyObject * self, PyObject * args)
     result = Py_BuildValue("l", (long)revent);
 
  leave_func:
-    if (tuxbuf) tpfree(tuxbuf);
+    if (ndrxbuf) tpfree(ndrxbuf);
     return result;
 }
 
 /* }}} */
-/* {{{ tux_tprecv() */
+/* {{{ ndrx_tprecv() */
 
 static PyObject * 
-tux_tprecv(PyObject * self, PyObject * args)
+ndrx_tprecv(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * res_tuple = NULL;
     PyObject * handle_py = NULL;
     PyObject * flags_py = NULL;
 
-    char* tuxbuf = NULL;
+    char* ndrxbuf = NULL;
     
     int handle = -1;
     long flags = 0;
@@ -908,18 +908,18 @@ tux_tprecv(PyObject * self, PyObject * args)
     }
 
     /* Buffer type will be changed by tprecv() if necessary */
-    if ((tuxbuf = tpalloc("FML32", NULL, TUXBUFSIZE)) == NULL) {
-	fprintf(stderr, "tpalloc(): %d - %s\n", tperrno, tpstrerror(tperrno));
+    if ((ndrxbuf = tpalloc("UBF32", NULL, NDRXBUFSIZE)) == NULL) {
+	bprintf(stderr, "tpalloc(): %d - %s\n", tperrno, tpstrerror(tperrno));
 	goto leave_func;
     }
     
-    if (Finit32((FBFR32*)tuxbuf, TUXBUFSIZE) < 0) {
-	fprintf(stderr, "Finit32(): %s\n", Fstrerror(Ferror));
+    if (Binit((UBFH*)ndrxbuf, NDRXBUFSIZE) < 0) {
+	bprintf(stderr, "Binit(): %s\n", Bstrerror(Berror));
 	goto leave_func;
     }
 
     /*    int tprecv(int cd, char **data, long *len, long flags, long *revent) */
-    if ((ret = tprecv(handle, &tuxbuf, &len, flags, &revent)) < 0) {
+    if ((ret = tprecv(handle, &ndrxbuf, &len, flags, &revent)) < 0) {
 	char tmp[200] = "";
 	if (tperrno != TPEEVENT) {
 	    sprintf(tmp, "tprecv(): %d - %s", tperrno, tpstrerror(tperrno));
@@ -935,7 +935,7 @@ tux_tprecv(PyObject * self, PyObject * args)
        TPEV_SVCFAIL, and TPEV_SENDONLY events. Valid events for tprecv() are as follows. */
 
     if ((revent & ( TPEV_SVCSUCC | TPEV_SVCFAIL | TPEV_SENDONLY))) {
-	if ((len > 0) && (result = transform_tux_to_py(tuxbuf)) == NULL) {
+	if ((len > 0) && (result = transform_ndrx_to_py(ndrxbuf)) == NULL) {
 	    goto leave_func;
 	}
     }
@@ -947,15 +947,15 @@ tux_tprecv(PyObject * self, PyObject * args)
 	PyTuple_SetItem(res_tuple, 1, PyLong_FromLong(revent));
 
  leave_func:
-    if (tuxbuf) tpfree(tuxbuf);
+    if (ndrxbuf) tpfree(ndrxbuf);
     return res_tuple;
 }
 
 /* }}} */
-#ifndef TUXWS
-/* {{{ tux_tpopen() */
+#ifndef NDRXWS
+/* {{{ ndrx_tpopen() */
 
-static PyObject* tux_tpopen(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_tpopen(PyObject* self, PyObject* arg) {
 
     PyObject * result         = NULL;
 
@@ -976,9 +976,9 @@ static PyObject* tux_tpopen(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-/* {{{ tux_tpclose() */
+/* {{{ ndrx_tpclose() */
 
-static PyObject* tux_tpclose(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_tpclose(PyObject* self, PyObject* arg) {
 
     PyObject * result         = NULL;
     int ret      = -1;
@@ -998,10 +998,10 @@ static PyObject* tux_tpclose(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-#endif /* TUXWS */
-/* {{{ tux_tpbegin() */
+#endif /* NDRXWS */
+/* {{{ ndrx_tpbegin() */
 
-static PyObject* tux_tpbegin(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_tpbegin(PyObject* self, PyObject* arg) {
 
     PyObject * result         = NULL;
     PyObject * timeout_py     = NULL;
@@ -1056,9 +1056,9 @@ static PyObject* tux_tpbegin(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-/* {{{ tux_tpcommit() */
+/* {{{ ndrx_tpcommit() */
 
-static PyObject* tux_tpcommit(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_tpcommit(PyObject* self, PyObject* arg) {
 
     PyObject * result         = NULL;
     PyObject * flags_py       = NULL;
@@ -1096,9 +1096,9 @@ static PyObject* tux_tpcommit(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-/* {{{ tux_tpabort() */
+/* {{{ ndrx_tpabort() */
 
-static PyObject* tux_tpabort(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_tpabort(PyObject* self, PyObject* arg) {
 
     PyObject * result         = NULL;
     PyObject * flags_py       = NULL;
@@ -1134,9 +1134,9 @@ static PyObject* tux_tpabort(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-/* {{{ tux_tpsuspend() */
+/* {{{ ndrx_tpsuspend() */
 
-static PyObject* tux_tpsuspend(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_tpsuspend(PyObject* self, PyObject* arg) {
 
     PyObject * result         = NULL; 
     PyObject * flags_py       = NULL;
@@ -1186,9 +1186,9 @@ static PyObject* tux_tpsuspend(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-/* {{{ tux_tpresume() */
+/* {{{ ndrx_tpresume() */
 
-static PyObject* tux_tpresume(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_tpresume(PyObject* self, PyObject* arg) {
 
     int ret    = -1;
     long flags = 0;
@@ -1227,9 +1227,9 @@ static PyObject* tux_tpresume(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-/* {{{ tux_tpgetlev() */
+/* {{{ ndrx_tpgetlev() */
 
-static PyObject* tux_tpgetlev(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_tpgetlev(PyObject* self, PyObject* arg) {
 
     int ret    = -1;
     PyObject * result         = NULL;
@@ -1249,23 +1249,23 @@ static PyObject* tux_tpgetlev(PyObject* self, PyObject* arg) {
 
 /* }}} */
 
-/* {{{ tux_tpinit() */
+/* {{{ ndrx_tpinit() */
 
 static PyObject * 
-tux_tpinit(PyObject * self, PyObject * args)
+ndrx_tpinit(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * input = NULL;
-    TPINIT* tuxbuf = NULL;
+    TPINIT* ndrxbuf = NULL;
     int idx = 0;
 
 #ifdef DEBUG
-    fprintf(stderr, "entering tux_tpinit(args= %x0x) ...\n", args);
+    bprintf(stderr, "entering ndrx_tpinit(args= %x0x) ...\n", args);
 #endif
     if (args) {
 	if (PyArg_ParseTuple(args, "O|O", &input) < 0) {
 #ifdef DEBUG
-	    fprintf(stderr, "parseTuple (tux_tpinit)\n");
+	    bprintf(stderr, "parseTuple (ndrx_tpinit)\n");
 #endif
 	    goto leave_func;
 	}
@@ -1276,7 +1276,7 @@ tux_tpinit(PyObject * self, PyObject * args)
 	
 #define TPINITDATASIZE 4096
 
-	if ((tuxbuf = (TPINIT*)tpalloc("TPINIT", NULL, TPINITNEED(TPINITDATASIZE))) == NULL) {
+	if ((ndrxbuf = (TPINIT*)tpalloc("TPINIT", NULL, TPINITNEED(TPINITDATASIZE))) == NULL) {
 	    char tmp[200] = "";
 	    sprintf(tmp, "tpalloc(TPINIT): %d - %s", tperrno, tpstrerror(tperrno));
 	    PyErr_SetString(PyExc_RuntimeError, tmp);
@@ -1285,7 +1285,7 @@ tux_tpinit(PyObject * self, PyObject * args)
 
 	keylist = PyDict_Keys(input);
 	if (!keylist) {
-	    fprintf(stderr, "tpinit(): PyDict_Keys(keys, %d) returned NULL\n", idx);
+	    bprintf(stderr, "tpinit(): PyDict_Keys(keys, %d) returned NULL\n", idx);
 	    goto leave_func;
 
 	}	    
@@ -1297,7 +1297,7 @@ tux_tpinit(PyObject * self, PyObject * args)
 
 	    key = PyList_GetItem(keylist, idx);  /* borrowed reference */
 	    if (!key) {
-		fprintf(stderr, "tpinit(): PyList_GetItem(keys, %d) returned NULL\n", idx);
+		bprintf(stderr, "tpinit(): PyList_GetItem(keys, %d) returned NULL\n", idx);
 		goto leave_func;
 	    }
 	    key_cstring = PyString_AsString(key);
@@ -1315,23 +1315,23 @@ tux_tpinit(PyObject * self, PyObject * args)
 
 	    if (!strcmp(key_cstring, "usrname")) {
 		val_cstring = PyString_AsString(PyDict_GetItemString(input, key_cstring));  /* borrowed ref. */
-		strcpy(tuxbuf->usrname, val_cstring);
+		strcpy(ndrxbuf->usrname, val_cstring);
 	    } else if (!strcmp(key_cstring, "cltname")) {
 		val_cstring = PyString_AsString(PyDict_GetItemString(input, key_cstring));  /* borrowed ref. */
-		strcpy(tuxbuf->cltname, val_cstring);
+		strcpy(ndrxbuf->cltname, val_cstring);
 	    } else if (!strcmp(key_cstring, "passwd")) {
 		val_cstring = PyString_AsString(PyDict_GetItemString(input, key_cstring));  /* borrowed ref. */
-		strcpy(tuxbuf->passwd, val_cstring);
+		strcpy(ndrxbuf->passwd, val_cstring);
 	    } else if (!strcmp(key_cstring, "grpname")) {
 		val_cstring = PyString_AsString(PyDict_GetItemString(input, key_cstring));  /* borrowed ref. */
-		strcpy(tuxbuf->grpname, val_cstring);
+		strcpy(ndrxbuf->grpname, val_cstring);
 	    } else if (!strcmp(key_cstring, "data")) {
 		val_cstring = PyString_AsString(PyDict_GetItemString(input, key_cstring));  /* borrowed ref. */
-		strncpy((char*)&(tuxbuf->data), val_cstring, TPINITDATASIZE-1);
-		tuxbuf->datalen = (long)strlen(val_cstring) + 1;
+		strncpy((char*)&(ndrxbuf->data), val_cstring, TPINITDATASIZE-1);
+		ndrxbuf->datalen = (long)strlen(val_cstring) + 1;
 	    } else if (!strcmp(key_cstring, "flags")) {
 		long val_flags = PyLong_AsLong(PyDict_GetItemString(input, key_cstring));  /* borrowed ref. */
-		tuxbuf->flags = val_flags;
+		ndrxbuf->flags = val_flags;
 	    }
 	    
 	    else {
@@ -1343,13 +1343,13 @@ tux_tpinit(PyObject * self, PyObject * args)
 	}
     }
 #ifdef DEBUG
-	fprintf(stderr, "calling tpinit()\n");
-	if (tuxbuf)
-	    fprintf(stderr, "usrname = >%s<, cltname = >%s<\n", 
-		    tuxbuf->usrname, tuxbuf->cltname);
+	bprintf(stderr, "calling tpinit()\n");
+	if (ndrxbuf)
+	    bprintf(stderr, "usrname = >%s<, cltname = >%s<\n", 
+		    ndrxbuf->usrname, ndrxbuf->cltname);
 #endif
 	
-    if (tpinit(tuxbuf) < 0) {
+    if (tpinit(ndrxbuf) < 0) {
 	char tmp[200] = "";
 	sprintf(tmp, "tpinit(): %d - %s", tperrno, tpstrerror(tperrno));
 	PyErr_SetString(PyExc_RuntimeError, tmp);
@@ -1361,15 +1361,15 @@ tux_tpinit(PyObject * self, PyObject * args)
     }
     
  leave_func:
-    if (tuxbuf) tpfree((char*)tuxbuf);
+    if (ndrxbuf) tpfree((char*)ndrxbuf);
     return result;
 }
 
 /* }}} */
-/* {{{ tux_tpgetctxt() */
-#if TUXVERSION >= 7
+/* {{{ ndrx_tpgetctxt() */
+#if NDRXVERSION >= 7
 static PyObject * 
-tux_tpgetctxt(PyObject * self, PyObject * args)
+ndrx_tpgetctxt(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * flags_py = NULL;
@@ -1402,12 +1402,12 @@ tux_tpgetctxt(PyObject * self, PyObject * args)
  leave_func:
     return result;
 }
-#endif /* TUXVERSION */
+#endif /* NDRXVERSION */
 /* }}} */
-/* {{{ tux_tpsetctxt() */
-#if TUXVERSION >= 7
+/* {{{ ndrx_tpsetctxt() */
+#if NDRXVERSION >= 7
 static PyObject * 
-tux_tpsetctxt(PyObject * self, PyObject * args)
+ndrx_tpsetctxt(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * context_py = NULL;
@@ -1446,11 +1446,11 @@ tux_tpsetctxt(PyObject * self, PyObject * args)
  leave_func:
     return result;
 }
-#endif /* TUXVERSION */
+#endif /* NDRXVERSION */
 /* }}} */
-/* {{{ tux_tpchkauth() */
+/* {{{ ndrx_tpchkauth() */
 
-static PyObject* tux_tpchkauth(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_tpchkauth(PyObject* self, PyObject* arg) {
 
     PyObject * result         = NULL;
     int ret = -1;
@@ -1469,10 +1469,10 @@ static PyObject* tux_tpchkauth(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-/* {{{ tux_tpterm() */
+/* {{{ ndrx_tpterm() */
 
 static PyObject * 
-tux_tpterm(PyObject * self, PyObject * args)
+ndrx_tpterm(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     
@@ -1492,10 +1492,10 @@ tux_tpterm(PyObject * self, PyObject * args)
 }
 
 /* }}} */
-#ifndef TUXWS
-/* {{{ tux_tpadvertise() */
+#ifndef NDRXWS
+/* {{{ ndrx_tpadvertise() */
 
-static PyObject* tux_tpadvertise(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_tpadvertise(PyObject* self, PyObject* arg) {
     int idx = 0;
     char * service_name   = NULL;
     char * method_name    = NULL;
@@ -1522,7 +1522,7 @@ static PyObject* tux_tpadvertise(PyObject* self, PyObject* arg) {
 	goto leave_func;
     }
     
-    if (tpadvertise(service_name, tuxedo_dispatch) < 0) {
+    if (tpadvertise(service_name, endurox_dispatch) < 0) {
 	char tmp[200] = "";
 	sprintf(tmp, "tpadvertise(): %d - %s", tperrno, tpstrerror(tperrno));
 	PyErr_SetString(PyExc_RuntimeError, tmp);
@@ -1548,9 +1548,9 @@ static PyObject* tux_tpadvertise(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-/* {{{ tux_tpunadvertise() */
+/* {{{ ndrx_tpunadvertise() */
 
-static PyObject* tux_tpunadvertise(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_tpunadvertise(PyObject* self, PyObject* arg) {
     char * svc_name = NULL;
     PyObject * result = NULL;
 
@@ -1577,7 +1577,7 @@ static PyObject* tux_tpunadvertise(PyObject* self, PyObject* arg) {
 
     if (delete_entry(svc_name) < 0) {
 	PyErr_SetString(PyExc_RuntimeError, "tpunadvertise(): internal data corrupted");
-	fprintf(stderr, "Not found: %s\n", svc_name);
+	bprintf(stderr, "Not found: %s\n", svc_name);
 	goto leave_func;
     }
 
@@ -1587,11 +1587,11 @@ static PyObject* tux_tpunadvertise(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-#endif /* TUXWS */
-/* {{{ tux_tpenqueue() */
+#endif /* NDRXWS */
+/* {{{ ndrx_tpenqueue() */
 
 static PyObject * 
-tux_tpenqueue(PyObject * self, PyObject * args)
+ndrx_tpenqueue(PyObject * self, PyObject * args)
 {
     PyObject * result   = NULL;
     PyObject * flags_py = NULL;
@@ -1600,7 +1600,7 @@ tux_tpenqueue(PyObject * self, PyObject * args)
     
     char* queue_space = NULL;
     char* queue_name  = NULL;
-    char* tuxbuf      = NULL;
+    char* ndrxbuf      = NULL;
     
     long flags = 0;
 
@@ -1718,11 +1718,11 @@ tux_tpenqueue(PyObject * self, PyObject * args)
 	}
     } 
 
-    if ((tuxbuf = transform_py_to_tux(data)) == NULL) {
+    if ((ndrxbuf = transform_py_to_ndrx(data)) == NULL) {
 	goto leave_func;
     }
 
-    if (tpenqueue(queue_space, queue_name, &qctl, tuxbuf, 0, flags) < 0) {
+    if (tpenqueue(queue_space, queue_name, &qctl, ndrxbuf, 0, flags) < 0) {
 	char tmp[200] = "";
 
 	/* 
@@ -1757,15 +1757,15 @@ tux_tpenqueue(PyObject * self, PyObject * args)
 
     result = Py_BuildValue("l", 1);
  leave_func:
-    if (tuxbuf) tpfree(tuxbuf);
+    if (ndrxbuf) tpfree(ndrxbuf);
     return result;
 }
 
 /* }}} */
-/* {{{ tux_tpdequeue() */
+/* {{{ ndrx_tpdequeue() */
 
 static PyObject * 
-tux_tpdequeue(PyObject * self, PyObject * args)
+ndrx_tpdequeue(PyObject * self, PyObject * args)
 {
     PyObject * result   = NULL;
     PyObject * flags_py = NULL;
@@ -1775,7 +1775,7 @@ tux_tpdequeue(PyObject * self, PyObject * args)
     char* queue_space = NULL;
     char* queue_name  = NULL;
 
-    char* tuxbuf = NULL;
+    char* ndrxbuf = NULL;
 
     long flags  = 0;
     long outlen = 0;
@@ -1827,7 +1827,7 @@ tux_tpdequeue(PyObject * self, PyObject * args)
 	}
     } 
 
-    if ((tuxbuf = tpalloc("FML32", NULL, TUXBUFSIZE) ) == NULL) {
+    if ((ndrxbuf = tpalloc("UBF32", NULL, NDRXBUFSIZE) ) == NULL) {
 #ifdef DEBUG
 	    printf("%d : tpalloc failed\n", __LINE__);
 #endif
@@ -1837,7 +1837,7 @@ tux_tpdequeue(PyObject * self, PyObject * args)
 #ifdef DEBUG
 	    printf("%d : before tpdequeue\n", __LINE__);
 #endif
-    if (tpdequeue(queue_space, queue_name, &qctl, &tuxbuf, &outlen, flags) < 0) {
+    if (tpdequeue(queue_space, queue_name, &qctl, &ndrxbuf, &outlen, flags) < 0) {
 	char tmp[200] = "";
 
 	if (tperrno == TPEDIAGNOSTIC) {
@@ -1860,9 +1860,9 @@ tux_tpdequeue(PyObject * self, PyObject * args)
 	    printf("%d : after tpdequeue\n", __LINE__);
 #endif
 
-    if ((result = transform_tux_to_py(tuxbuf)) == NULL) {
+    if ((result = transform_ndrx_to_py(ndrxbuf)) == NULL) {
 #ifdef DEBUG
-	    printf("%d : transform_tux_to_py failed\n ", __LINE__);
+	    printf("%d : transform_ndrx_to_py failed\n ", __LINE__);
 #endif
       
 	goto leave_func;
@@ -1920,15 +1920,15 @@ tux_tpdequeue(PyObject * self, PyObject * args)
      
  leave_func:
     if (item) { Py_DECREF(item); }
-    if (tuxbuf) { tpfree(tuxbuf); }
+    if (ndrxbuf) { tpfree(ndrxbuf); }
     return result;
 }
 
 /* }}} */
 
-/* {{{ tux_tppost() */
+/* {{{ ndrx_tppost() */
 
-static PyObject* tux_tppost(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_tppost(PyObject* self, PyObject* arg) {
 
     PyObject * result   = NULL;
     PyObject * flags_py = NULL;
@@ -1936,7 +1936,7 @@ static PyObject* tux_tppost(PyObject* self, PyObject* arg) {
     PyObject * evdata   = NULL;
 
     char * event_name = NULL;
-    char* tuxbuf = NULL;
+    char* ndrxbuf = NULL;
 
     long flags = 0;
 
@@ -1955,11 +1955,11 @@ static PyObject* tux_tppost(PyObject* self, PyObject* arg) {
 	PyErr_SetString(PyExc_RuntimeError, "tppost(): No event name given");
 	goto leave_func;
     }
-    if ((tuxbuf = transform_py_to_tux(evdata)) == NULL) {
+    if ((ndrxbuf = transform_py_to_ndrx(evdata)) == NULL) {
 	goto leave_func;
     }
 
-    if (tppost(event_name, tuxbuf, 0, flags) < 0) {
+    if (tppost(event_name, ndrxbuf, 0, flags) < 0) {
 	char tmp[200] = "";
 	sprintf(tmp, "tppost(): %d - %s", tperrno, tpstrerror(tperrno));
 	PyErr_SetString(PyExc_RuntimeError, tmp);
@@ -1969,15 +1969,15 @@ static PyObject* tux_tppost(PyObject* self, PyObject* arg) {
     result = PyInt_FromLong((long)tpurcode);
 
  leave_func:
-    if (tuxbuf) tpfree(tuxbuf);
+    if (ndrxbuf) tpfree(ndrxbuf);
 
     return result; 
 }
 
 /* }}} */
-/* {{{ tux_tpsubscribe() */
+/* {{{ ndrx_tpsubscribe() */
 
-static PyObject* tux_tpsubscribe(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_tpsubscribe(PyObject* self, PyObject* arg) {
 
     PyObject * result       = NULL;
     PyObject * flags_py     = NULL;
@@ -2038,9 +2038,9 @@ static PyObject* tux_tpsubscribe(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-/* {{{ tux_tpunsubscribe() */
+/* {{{ ndrx_tpunsubscribe() */
 
-static PyObject* tux_tpunsubscribe(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_tpunsubscribe(PyObject* self, PyObject* arg) {
 
     PyObject * result   = NULL;
     PyObject * flags_py = NULL;
@@ -2074,9 +2074,9 @@ static PyObject* tux_tpunsubscribe(PyObject* self, PyObject* arg) {
 
 /* }}} */
 
-/* {{{ tux_tpnotify() */
+/* {{{ ndrx_tpnotify() */
 
-static PyObject* tux_tpnotify(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_tpnotify(PyObject* self, PyObject* arg) {
 
     PyObject * result      = NULL;
     PyObject * clientid_py = NULL;
@@ -2084,7 +2084,7 @@ static PyObject* tux_tpnotify(PyObject* self, PyObject* arg) {
     PyObject * flags_py     = NULL;
 
     char * clientid_string = NULL;
-    char * tuxbuf          = NULL;
+    char * ndrxbuf          = NULL;
     long flags             = 0;
 
     CLIENTID clientid;
@@ -2103,12 +2103,12 @@ static PyObject* tux_tpnotify(PyObject* self, PyObject* arg) {
 
     if ((clientid_string = PyString_AsString(clientid_py)) == NULL) {
 #ifdef DEBUG
-	fprintf(stderr, "tpnotify(): No client name given \n");
+	bprintf(stderr, "tpnotify(): No client name given \n");
 #endif
 	goto leave_func;
     }
     
-    if ((tuxbuf = transform_py_to_tux(data_py)) == NULL) {
+    if ((ndrxbuf = transform_py_to_ndrx(data_py)) == NULL) {
 	goto leave_func;
     }
 
@@ -2119,7 +2119,7 @@ static PyObject* tux_tpnotify(PyObject* self, PyObject* arg) {
 	goto leave_func;
     }
     
-    if(tpnotify(&clientid, tuxbuf, 0, flags) == -1) {
+    if(tpnotify(&clientid, ndrxbuf, 0, flags) == -1) {
 	char tmp[200] = "";
 	sprintf(tmp, "tpnotify(): %d - %s", tperrno, tpstrerror(tperrno));
 	PyErr_SetString(PyExc_RuntimeError, tmp);
@@ -2129,14 +2129,14 @@ static PyObject* tux_tpnotify(PyObject* self, PyObject* arg) {
     result = PyInt_FromLong((long)tpurcode);
 
  leave_func:
-    if (tuxbuf) tpfree(tuxbuf);
+    if (ndrxbuf) tpfree(ndrxbuf);
     return result; 
 }
 
 /* }}} */
-/* {{{ tux_tpbroadcast() */
+/* {{{ ndrx_tpbroadcast() */
 
-static PyObject* tux_tpbroadcast(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_tpbroadcast(PyObject* self, PyObject* arg) {
 
     PyObject * result      = NULL;
     PyObject * data_py     = NULL;
@@ -2148,7 +2148,7 @@ static PyObject* tux_tpbroadcast(PyObject* self, PyObject* arg) {
     char * lmid    = NULL;
     char * usrname = NULL;
     char * cltname = NULL;
-    char * tuxbuf  = NULL;
+    char * ndrxbuf  = NULL;
 
     long flags     = 0;
 
@@ -2196,11 +2196,11 @@ static PyObject* tux_tpbroadcast(PyObject* self, PyObject* arg) {
 	}
     }
 	
-    if ((tuxbuf = transform_py_to_tux(data_py)) == NULL) {
+    if ((ndrxbuf = transform_py_to_ndrx(data_py)) == NULL) {
 	goto leave_func;
     }
 
-    if (tpbroadcast(lmid, usrname, cltname, tuxbuf,  0, flags) == -1) {
+    if (tpbroadcast(lmid, usrname, cltname, ndrxbuf,  0, flags) == -1) {
 	char tmp[200] = "";
 	sprintf(tmp, "tpbroadcast(): %d - %s", tperrno, tpstrerror(tperrno));
 	PyErr_SetString(PyExc_RuntimeError, tmp);
@@ -2210,26 +2210,26 @@ static PyObject* tux_tpbroadcast(PyObject* self, PyObject* arg) {
     result = PyInt_FromLong((long)tpurcode);
 
  leave_func:
-    if (tuxbuf) tpfree(tuxbuf);
+    if (ndrxbuf) tpfree(ndrxbuf);
     return result; 
 }
 
 /* }}} */
 
-/* {{{ tux_tpsetunsol() */
+/* {{{ ndrx_tpsetunsol() */
 
-/* This function is the message handler that is called from the TUXEDO
+/* This function is the message handler that is called from the ENDUROX
    libraries. It calls the user-specified Python callable object */
 
-static void unsol_handler(char* tuxbuf, long len, long flags) {
+static void unsol_handler(char* ndrxbuf, long len, long flags) {
 
     PyObject* data_py = NULL;
 
-    /* Transform the TUXEDO buffer to a Python type (len is not needed
-       (only STRING/FML32 is supported), flags is not supported by TUXEDO */
+    /* Transform the ENDUROX buffer to a Python type (len is not needed
+       (only STRING/UBF32 is supported), flags is not supported by ENDUROX */
 
-    if ((data_py = transform_tux_to_py(tuxbuf)) == NULL) {
-	fprintf(stderr, "transform_tux_to_py failed\n");
+    if ((data_py = transform_ndrx_to_py(ndrxbuf)) == NULL) {
+	bprintf(stderr, "transform_ndrx_to_py failed\n");
 	goto leave_func;
     }
 
@@ -2246,7 +2246,7 @@ static void unsol_handler(char* tuxbuf, long len, long flags) {
 }
 
 
-static PyObject* tux_tpsetunsol(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_tpsetunsol(PyObject* self, PyObject* arg) {
     char tmp[200] = "";
     PyObject * result = NULL;
     PyObject * old_py_unsol_handler;
@@ -2296,9 +2296,9 @@ static PyObject* tux_tpsetunsol(PyObject* self, PyObject* arg) {
     return result; 
 }
 /* }}} */
-/* {{{ tux_tpchkunsol() */
+/* {{{ ndrx_tpchkunsol() */
 
-static PyObject* tux_tpchkunsol(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_tpchkunsol(PyObject* self, PyObject* arg) {
     PyObject * result = NULL;
     long num_evts = 0;
 
@@ -2317,10 +2317,10 @@ static PyObject* tux_tpchkunsol(PyObject* self, PyObject* arg) {
 
 /* }}} */
 
-/* {{{ tux_userlog() */
+/* {{{ ndrx_userlog() */
 
 static PyObject * 
-tux_userlog(PyObject * self, PyObject * arg)
+ndrx_userlog(PyObject * self, PyObject * arg)
 {
     PyObject * result = NULL;
     char * log_string  = NULL;
@@ -2342,18 +2342,18 @@ tux_userlog(PyObject * self, PyObject * arg)
 
 /* }}} */
 
-/* {{{ tux_get_tpurcode() */
+/* {{{ ndrx_get_tpurcode() */
 
-static PyObject* tux_get_tpurcode(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_get_tpurcode(PyObject* self, PyObject* arg) {
     PyObject * result = NULL;
     result = PyInt_FromLong((long)tpurcode); /* tpurcode is thread-specific */
     return result; 
 }
 
 /* }}} */
-/* {{{ tux_set_tpurcode() */
+/* {{{ ndrx_set_tpurcode() */
 
-static PyObject* tux_set_tpurcode(PyObject* self, PyObject* arg) {
+static PyObject* ndrx_set_tpurcode(PyObject* self, PyObject* arg) {
     PyObject * result = NULL;
     if (!PyArg_ParseTuple(arg, "l", &_set_tpurcode)) {
 	result = NULL;
@@ -2362,11 +2362,11 @@ static PyObject* tux_set_tpurcode(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-#ifndef TUXWS
-/* {{{ tux_mainloop() */
+#ifndef NDRXWS
+/* {{{ ndrx_mainloop() */
 
 static PyObject * 
-tux_mainloop(PyObject * self, PyObject * args)
+ndrx_mainloop(PyObject * self, PyObject * args)
 {
     int i;
     int argc;
@@ -2381,7 +2381,7 @@ tux_mainloop(PyObject * self, PyObject * args)
     if (!PyArg_ParseTuple(args, "OOO|O", 
 			  &argv_obj, &_server_obj, &_reloader_function, &xa_switch)) {
 #ifdef DEBUG
-	fprintf(stderr, "parseTuple 2\n");
+	bprintf(stderr, "parseTuple 2\n");
 #endif
 	return NULL;
     }
@@ -2402,12 +2402,12 @@ tux_mainloop(PyObject * self, PyObject * args)
 	if (PyString_Check(tmp)) {
 	    if (!(argv[i] = PyString_AsString(tmp))) {
 #ifdef DEBUG
-		fprintf(stderr, "argv[%d]: PyString_asString() \n", i);
+		bprintf(stderr, "argv[%d]: PyString_asString() \n", i);
 #endif
 		return NULL;
 	    }
 #ifdef DEBUG
-		fprintf(stdout, "argv[%d] = %s \n", i, argv[i]);
+		bprintf(stdout, "argv[%d] = %s \n", i, argv[i]);
 #endif
 
 	}
@@ -2424,21 +2424,21 @@ tux_mainloop(PyObject * self, PyObject * args)
 }
 
 /* }}} */
-#endif /* TUXWS */
+#endif /* NDRXWS */
 
 /* **************************************** */
 /*                                          */
-/*      Definitions of global functions     */
+/*      Debinitions of global functions     */
 /*                                          */
 /* **************************************** */
 
 /* {{{ initatmi() */
 PyMODINIT_FUNC 
-#ifndef TUXWS
+#ifndef NDRXWS
     initatmi(void)
 #else
     initatmiws(void)
-#endif /* TUXWS */
+#endif /* NDRXWS */
 {
     PyObject *m = NULL;
     PyObject *d = NULL;
@@ -2450,11 +2450,11 @@ PyMODINIT_FUNC
     /*proc_name = */
 
     /* Create the module and add the functions */
-#ifndef TUXWS    
-    m = Py_InitModule("atmi", tux_methods);
+#ifndef NDRXWS    
+    m = Py_InitModule("atmi", ndrx_methods);
 #else
-    m = Py_InitModule("atmiws", tux_methods);
-#endif /* TUXWS */
+    m = Py_InitModule("atmiws", ndrx_methods);
+#endif /* NDRXWS */
 
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
@@ -2583,15 +2583,15 @@ PyMODINIT_FUNC
     ins(d, "TPEDIAGNOSTIC", TPEDIAGNOSTIC);
     ins(d, "TPEMIB", TPEMIB);
     ins(d, "TPMAXVAL", TPMAXVAL);
-#if TUXVERSION >= 7
+#if NDRXVERSION >= 7
     ins(d, "TPNULLCONTEXT", TPNULLCONTEXT);
-#endif /* TUXVERSION */
+#endif /* NDRXVERSION */
     ins(d, "tperrno", tperrno);
 
 
-    /* Tuxedo Version as defined by user at compile time */
+    /* Endurox Version as defined by user at compile time */
     
-    ins(d, "TUXVERSION", TUXVERSION);
+    ins(d, "NDRXVERSION", NDRXVERSION);
 
 
 
@@ -2602,7 +2602,7 @@ PyMODINIT_FUNC
 
 /* }}} */
 
-#ifndef TUXWS
+#ifndef NDRXWS
 
 /* {{{ tpsvrinit() */
 
@@ -2634,19 +2634,19 @@ tpsvrdone(void)
 }
 
 /* }}} */
-/* {{{ tuxedo_dispatch() */
+/* {{{ endurox_dispatch() */
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  This is the service routine that is called by the Tux runtime
+  This is the service routine that is called by the Ndrx runtime
   environment.  The TPSVCINFO structure is transformed to instance
   variables of the server object. The data portion is transformed to a
   Python string or dictionary. The appropriate (rqst->name) service routine
-  is called, the returned value is transformed back to a Tux data type.
+  is called, the returned value is transformed back to a Ndrx data type.
 
-  TPSVCINFO * rqst         TPSVCINFO structure from the Tux runtime environment
+  TPSVCINFO * rqst         TPSVCINFO structure from the Ndrx runtime environment
   +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
-void tuxedo_dispatch(TPSVCINFO * rqst) {
+void endurox_dispatch(TPSVCINFO * rqst) {
     int idx = 0;
     PyObject* new_server_obj = NULL;
     PyObject* obj, *pydata;
@@ -2656,7 +2656,7 @@ void tuxedo_dispatch(TPSVCINFO * rqst) {
     PyObject *py_flags = NULL;
     PyObject *py_appkey = NULL;
     char cltid_string[TPCONVMAXSTR+1] = "";
-    char* res_tux = NULL;
+    char* res_ndrx = NULL;
     long tp_returncode = TPSUCCESS;
 
     /* reset user return code */
@@ -2697,7 +2697,7 @@ void tuxedo_dispatch(TPSVCINFO * rqst) {
     py_name = PyString_FromString(rqst->name);
     if (py_name) {
 	if (PyObject_SetAttrString(_server_obj, "name", py_name) < 0) {
-	    fprintf(stderr, "PyObject_SetAttrString( name ) error\n");
+	    bprintf(stderr, "PyObject_SetAttrString( name ) error\n");
 	}
 	Py_DECREF(py_name); 
 	py_name = NULL;
@@ -2708,7 +2708,7 @@ void tuxedo_dispatch(TPSVCINFO * rqst) {
     py_cd = PyInt_FromLong(rqst->cd);
     if (py_cd && (rqst->flags & TPCONV)) {
 	if (PyObject_SetAttrString( _server_obj, "cd", py_cd) < 0) {
-	    fprintf(stderr, "PyObject_SetAttrString( cd ) error\n");
+	    bprintf(stderr, "PyObject_SetAttrString( cd ) error\n");
 	}
     }
     if (py_cd) { 
@@ -2718,7 +2718,7 @@ void tuxedo_dispatch(TPSVCINFO * rqst) {
     py_flags = PyLong_FromLong(rqst->flags);
     if (py_flags) {
 	if (PyObject_SetAttrString(_server_obj, "flags", py_flags) < 0) {
-	    fprintf(stderr, "PyObject_SetAttrString( flags ) error\n");
+	    bprintf(stderr, "PyObject_SetAttrString( flags ) error\n");
 	}
 	Py_DECREF(py_flags);
 	py_flags = NULL;
@@ -2727,7 +2727,7 @@ void tuxedo_dispatch(TPSVCINFO * rqst) {
     py_appkey = PyLong_FromLong(rqst->appkey);
     if (py_appkey) {
 	if (PyObject_SetAttrString(_server_obj, "appkey", py_appkey) < 0) {
-	    fprintf(stderr, "PyObject_SetAttrString( appkey ) error\n");
+	    bprintf(stderr, "PyObject_SetAttrString( appkey ) error\n");
 	}
 	Py_DECREF(py_appkey);
 	py_appkey = NULL;
@@ -2736,21 +2736,21 @@ void tuxedo_dispatch(TPSVCINFO * rqst) {
     /* convert CLIENTID to string */
     
     if (tpconvert(cltid_string, (char*)(rqst->cltid).clientdata, TPTOSTRING | TPCONVCLTID) == -1) {
-	fprintf(stderr, "tpconvert(bin_clientid -> string_clientid): %d - %s", tperrno, tpstrerror(tperrno));
+	bprintf(stderr, "tpconvert(bin_clientid -> string_clientid): %d - %s", tperrno, tpstrerror(tperrno));
 	tpreturn(TPFAIL, _set_tpurcode, 0, 0L, 0);
     }
 
     py_cltid = PyString_FromString(cltid_string);
     if (py_cltid) {
 	if (PyObject_SetAttrString(_server_obj, "cltid", py_cltid) < 0) {
-	    fprintf(stderr, "PyObject_SetAttrString( cltid ) error\n");
+	    bprintf(stderr, "PyObject_SetAttrString( cltid ) error\n");
 	}
 	Py_DECREF(py_cltid); 
 	py_cltid = NULL;
     }
 
     if ((idx=find_entry(rqst->name)) < 0) {
-	fprintf(stderr, "unknown servicename\n");
+	bprintf(stderr, "unknown servicename\n");
 	tpreturn(TPFAIL, _set_tpurcode, 0, 0L, 0);
     }
 
@@ -2759,8 +2759,8 @@ void tuxedo_dispatch(TPSVCINFO * rqst) {
     printf("transforming buffer ...\n");
 #endif
 
-    if ((obj = transform_tux_to_py(rqst->data)) == NULL) {
-	fprintf(stderr, "Cannot convert input buffer to a Python type\n");
+    if ((obj = transform_ndrx_to_py(rqst->data)) == NULL) {
+	bprintf(stderr, "Cannot convert input buffer to a Python type\n");
 	tpreturn(TPFAIL, _set_tpurcode, 0, 0L, 0);
     }
 
@@ -2770,7 +2770,7 @@ void tuxedo_dispatch(TPSVCINFO * rqst) {
     
     if (!(pydata = PyObject_CallMethod(_server_obj, _registered_services[idx].method, "O", obj))) {
 	Py_XDECREF(obj);
-	fprintf(stderr, "Error calling method %s ...\n", _registered_services[idx].method);
+	bprintf(stderr, "Error calling method %s ...\n", _registered_services[idx].method);
 	tpreturn(TPFAIL, _set_tpurcode, 0, 0L, 0);
     }
 
@@ -2780,21 +2780,21 @@ void tuxedo_dispatch(TPSVCINFO * rqst) {
 
     if (_forward) {
 #ifdef DEBUG
-	printf("tuxedo_dispatch: forward: %s -> \n", _forward_service);
+	printf("endurox_dispatch: forward: %s -> \n", _forward_service);
 	PyObject_Print(_forward_pydata, stdout, 0);
 	printf("\n");
 #endif
 	Py_XDECREF(pydata); /* don't need the data returned from function call (should be NULL) */
-	pydata = _forward_pydata; /* reference count was incremented by tux_tpforward() */
+	pydata = _forward_pydata; /* reference count was incremented by ndrx_tpforward() */
     }
 
 #ifdef DEBUG
     printf("returning ...\n");
 #endif
 
-    /* If the method call returned an integer, transform it to a Tux return
+    /* If the method call returned an integer, transform it to a Ndrx return
        code. If a string or dictionary was returned, transform it to the
-       corresponding Tux data type. In this case, a return code of
+       corresponding Ndrx data type. In this case, a return code of
        TPSUCCESS is returned */
     
     if (PyInt_Check(pydata) || PyLong_Check(pydata)) {
@@ -2809,13 +2809,13 @@ void tuxedo_dispatch(TPSVCINFO * rqst) {
 	    tp_returncode = TPSUCCESS; 
 	    break;
 	default:
-	    fprintf(stderr, "Unknown integer return code (assuming TPEXIT)");
+	    bprintf(stderr, "Unknown integer return code (assuming TPEXIT)");
 	    PyErr_SetString(PyExc_RuntimeError, "Unknown integer return code (assuming TPEXIT)");
 	    tp_returncode = TPEXIT;
 	}
     } else {
 	/* transform..() takes String or Dict */
-	if ((res_tux = transform_py_to_tux(pydata)) == NULL) {
+	if ((res_ndrx = transform_py_to_ndrx(pydata)) == NULL) {
 	    Py_XDECREF(obj);
 	    Py_XDECREF(pydata);
 	    tpreturn(TPFAIL, _set_tpurcode, 0, 0L, 0);
@@ -2830,15 +2830,15 @@ void tuxedo_dispatch(TPSVCINFO * rqst) {
 #ifdef DEBUG
 	printf("call tpforward(%s, ...)\n", _forward_service);
 #endif
-	tpforward(_forward_service, (char*)res_tux, 0L, 0);
+	tpforward(_forward_service, (char*)res_ndrx, 0L, 0);
     } else {
 #ifdef DEBUG
 	printf("call tpreturn(TPSUCCESS, ...)\n");
 #endif
-	tpreturn(tp_returncode, _set_tpurcode, (char*)res_tux, 0L, 0);
+	tpreturn(tp_returncode, _set_tpurcode, (char*)res_ndrx, 0L, 0);
     }
 }
 
 /* }}} */
 
-#endif /* TUXWS */
+#endif /* NDRXWS */

@@ -12,10 +12,10 @@ import os
 # remember to set WSNADDR for the client and to add a WSL to the 
 # ubbconfig
 
-# from tuxedo.atmiws import *
+# from endurox.atmiws import *
 
-from tuxedo.atmi import *
-from tuxedo.fmlbuffer import *
+from endurox.atmi import *
+from endurox.ubfbuffer import *
 
 class Test:
     def __init__(self):
@@ -52,12 +52,12 @@ else:
     test.failed()
 
 print
-print "### Testing Synchronous call with FML buffer:"
+print "### Testing Synchronous call with UBF buffer:"
 print
 tpinit({"cltname": "tpsysadm", "usrname": "szhh5e"})
 
 
-inp = FmlBuffer()
+inp = UbfBuffer()
 inp['VORNAME'][0] = "Ralf"
 inp['VORNAME'][1] = "Andreas"
 inp['NACHNAME'][0] = "Henschkowski"
@@ -73,7 +73,7 @@ else:
     test.failed()
 
 print
-print "### Testing Asynchronous calls to PING using FML buffer ..."
+print "### Testing Asynchronous calls to PING using UBF buffer ..."
 print
 
 tpinit({"cltname": "tpsysadm", "usrname": "szhh5e"})
@@ -200,7 +200,7 @@ print
 
 print "MIB query ..."
 
-input = FmlBuffer()
+input = UbfBuffer()
 input["TA_OPERATION"][0] = "GET"
 input["TA_CLASS"][0] = "T_SERVER"
 
@@ -407,14 +407,14 @@ else:
 
 
 
-if TUXVERSION > 7:
+if NDRXVERSION > 7:
 
     print
     print "### Testing multithreaded client ###"
     print
 
     try:
-	# used to determine the version of Tuxedo
+	# used to determine the version of Endurox
 	m = TPNULLCONTEXT
 
 	from threading import Thread
@@ -471,7 +471,7 @@ if TUXVERSION > 7:
 	print
 
     except AttributeError:
-	print " --> Not available in your version of Tuxedo or the atmi module"
+	print " --> Not available in your version of Endurox or the atmi module"
 
 
 test.report()

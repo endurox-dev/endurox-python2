@@ -1,6 +1,6 @@
 all:	demo
 
-demo:	TUXCONFIG tlog QFS server_exe
+demo:	NDRXCONFIG tlog QFS server_exe
 
 tlog:
 	python rplc.py <  create_tlog | bash
@@ -21,14 +21,14 @@ server_exe:
 	python rplc.py < testclient.py.templ > testclient.py
 	chmod +x testclient.py
 
-TUXCONFIG: ubbconfig
+NDRXCONFIG: ubbconfig
 	python rplc.py < ubbconfig | tmloadcf -y -
 
 
 clean:	
 		-rm -f *.a tags TAGS config.c Makefile.pre $(TARGET) sedscript
 		-rm -f *.so *.sl so_locations
-		-rm -f  *.pyc ULOG* stderr stdout tuxmodule.so QFS TUXFS TUXCONFIG tm*evt* 
+		-rm -f  *.pyc ULOG* stderr stdout ndrxmodule.so QFS NDRXFS NDRXCONFIG tm*evt* 
 		-rm -f testclient.py pyserver.py recv.py send.py simpcl.py 
 		-ipcrm `ipcs -q | grep ${USER}|awk  '{ print "-q " $$2 }'`        
 		-ipcrm `ipcs -s | grep ${USER}|awk  '{ print "-s " $$2 }'`        

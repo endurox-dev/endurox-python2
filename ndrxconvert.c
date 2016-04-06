@@ -1,6 +1,6 @@
 /* 
-   This file implements some functions to convert TUXEDO data types (STRING,
-   FML32) to Python data types (string, dictionary) and vice versa 
+   This file implements some functions to convert ENDUROX data types (STRING,
+   UBF32) to Python data types (string, dictionary) and vice versa 
 
    (c) 1999 Ralf Henschkowski (ralfh@gmx.ch)
 
@@ -8,43 +8,43 @@
 
 #include <stdio.h>
 
-#include <atmi.h>     /* TUXEDO Header File */
-#include <fml32.h>    /* TUXEDO Header File */
-#include <fml1632.h>  /* TUXEDO Header File */
-#include <userlog.h>  /* TUXEDO Header File */
+#include <atmi.h>     /* ENDUROX Header File */
+#include <ubf32.h>    /* ENDUROX Header File */
+#include <ubf1632.h>  /* ENDUROX Header File */
+#include <userlog.h>  /* ENDUROX Header File */
 
 #include <Python.h>
 
-#include "tuxconvert.h"
+#include "ndrxconvert.h"
 
-PyObject* fml_to_dict(FBFR32* fml) {
+PyObject* ubf_to_dict(UBFH* ubf) {
     PyObject* result = NULL;
     int res ;
     char * name;
-    FLDLEN32 len;
-    FLDOCC32 oc;
-    FLDID32 id;
+    BFLDLEN len;
+    BFLDOCC oc;
+    BFLDID id;
     PyObject* dict, *list;
     char* type;
     
     dict = PyDict_New();
 
 #ifdef DEBUG
-    Fprint32(fml);
+    Bprint(ubf);
 #endif
-    id = FIRSTFLDID;
+    id = BFIRSTFLDID;
     while (1) {
 
-	len = TUXBUFSIZE;
+	len = NDRXBUFSIZE;
 #ifdef DEBUG
-	printf("[run %d] vor fnext() (id = %d, oc = %d, len = %d) \n", 
+	printf("[run %d] vor bnext() (id = %d, oc = %d, len = %d) \n", 
 	       run++, id, oc, len);
 #endif
 	/* get next field id and occurence */
-	res = Fnext32(fml, &id, &oc, NULL, NULL);
+	res = Bnext(ubf, &id, &oc, NULL, NULL);
 	if (res <= 0) break;
-	if ((name = Fname32(id)) == NULL) {
-	    fprintf(stderr, "Fname(%lu): %s", (long)id, Fstrerror(Ferror));
+	if ((name = Bbfname(id)) == NULL) {
+	    bprintf(stderr, "Bfname(%lu): %s", (long)id, Bstrerror(Berror));
 	    result = NULL;
 	    goto leave_func;
 	}
@@ -56,40 +56,40 @@ PyObject* fml_to_dict(FBFR32* fml) {
 	    Py_DECREF(list);  /* reference now owned by dictionary */
 	}     
 	
-	type = Ftype32(id);
+	type = Btype(id);
 	
 	if (strcmp(type, "long") == 0) {
 	    long longval = 0;
-	    FLDLEN32 longlen  = sizeof (FLDLEN32);
+	    BFLDLEN longlen  = sizeof (BFLDLEN);
 	    PyObject* pyval;
 	    
-	    Fget32(fml, id, oc, (char*)&longval, &longlen);
+	    Bget(ubf, id, oc, (char*)&longval, &longlen);
 	    pyval = Py_BuildValue("i", longval);
 	    PyList_Append(list, pyval);
 	    Py_DECREF(pyval);  /* reference now owned by list */
 	}  else if (strcmp(type, "double") == 0) {
 	    double doubleval = 0.0;
-	    FLDLEN32 doublelen  = sizeof (FLDLEN32);
+	    BFLDLEN doublelen  = sizeof (BFLDLEN);
 	    PyObject* pyval;
 
-	    Fget32(fml, id, oc, (char*)&doubleval, &doublelen);
+	    Bget(ubf, id, oc, (char*)&doubleval, &doublelen);
 
 	    pyval = Py_BuildValue("d", doubleval);
 	    PyList_Append(list, pyval);
 	    Py_DECREF(pyval);  
 	} else if (strcmp(type, "string") == 0) {
 	    PyObject* pyval;
-	    FLDLEN32 stringlen  = TUXBUFSIZE;
-	    char stringval[TUXBUFSIZE] = "";
-	    Fget32(fml, id, oc, (char*)&stringval, &stringlen);
+	    BFLDLEN stringlen  = NDRXBUFSIZE;
+	    char stringval[NDRXBUFSIZE] = "";
+	    Bget(ubf, id, oc, (char*)&stringval, &stringlen);
 	    pyval = Py_BuildValue("s", stringval);
 	    PyList_Append(list, pyval);
 	    Py_DECREF(pyval);  
 	} else {
 	    char msg[100];
-	    sprintf(msg, "unsupported FML type <%s>", type);
+	    sprintf(msg, "unsupported UBF type <%s>", type);
 	    PyErr_SetString(PyExc_RuntimeError, msg);
-	    fprintf(stderr, "Ftype32(): %s", Fstrerror(Ferror));
+	    bprintf(stderr, "Btype(): %s", Bstrerror(Berror));
 
 	    result =  NULL;
 	    goto leave_func;
@@ -97,8 +97,8 @@ PyObject* fml_to_dict(FBFR32* fml) {
 	
     }
     if (res < 0) {
-	PyErr_SetString(PyExc_RuntimeError, "Problems with Fnext()");
-	fprintf(stderr, "Fnext32(): %s", Fstrerror(Ferror));
+	PyErr_SetString(PyExc_RuntimeError, "Problems with Bnext()");
+	bprintf(stderr, "Bnext(): %s", Bstrerror(Berror));
 
 	result =  NULL;
 	goto leave_func;
@@ -117,11 +117,11 @@ PyObject* fml_to_dict(FBFR32* fml) {
 
 
 
-FBFR32* dict_to_fml(PyObject* dict) {
-    FBFR32*        result = NULL;
-    int            idx, oc, fldtype;
-    FLDID32        id;
-    FBFR32*        fml;
+UBFH* dict_to_ubf(PyObject* dict) {
+    UBFH*        result = NULL;
+    int            idx, oc, bfldtype;
+    BFLDID        id;
+    UBFH*        ubf;
 
     PyObject* keylist;
 
@@ -130,13 +130,13 @@ FBFR32* dict_to_fml(PyObject* dict) {
     PyObject_Print(dict, stdout, 0);
     printf("\n");
 #endif
-    if ((fml = (FBFR32*)tpalloc("FML32", NULL, TUXBUFSIZE)) == NULL) {
-	fprintf(stderr, "tpalloc(): %s\n", tpstrerror(tperrno));
+    if ((ubf = (UBFH*)tpalloc("UBF32", NULL, NDRXBUFSIZE)) == NULL) {
+	bprintf(stderr, "tpalloc(): %s\n", tpstrerror(tperrno));
 	goto leave_func;
     }
     
-    if (Finit32(fml, TUXBUFSIZE) < 0) {
-	fprintf(stderr, "Finit32(): %s\n", Fstrerror(Ferror));
+    if (Binit(ubf, NDRXBUFSIZE) < 0) {
+	bprintf(stderr, "Binit(): %s\n", Bstrerror(Berror));
 	goto leave_func;
     }
 
@@ -148,15 +148,15 @@ FBFR32* dict_to_fml(PyObject* dict) {
 	key = PyList_GetItem(keylist, idx);  /* borrowed reference */
 
 	if (!key) {
-	    fprintf(stderr, "PyList_GetItem(keys, %d) returned NULL\n", idx);
+	    bprintf(stderr, "PyList_GetItem(keys, %d) returned NULL\n", idx);
 	    goto leave_func;
 	}
 	
 	key_cstring = PyString_AsString(key);
-	id = Fldid32(key_cstring);
-	if (id == BADFLDID) {
+	id = Bfldid(key_cstring);
+	if (id == BBADFLDID) {
 	    char tmp[1024] = "";
-	    sprintf(tmp, "Fldid32(): %d - %s:", Ferror32, Fstrerror32(Ferror32));
+	    sprintf(tmp, "Bfldid(): %d - %s:", Berror, Bstrerror(Berror));
 	    PyErr_SetString(PyExc_RuntimeError, tmp);
 	    goto leave_func;
 	}
@@ -168,14 +168,14 @@ FBFR32* dict_to_fml(PyObject* dict) {
 
 	    cval = PyString_AsString(vallist);
 	    if (cval == NULL) {
-		fprintf(stderr, "error in PyString_AsString()\n");
+		bprintf(stderr, "error in PyString_AsString()\n");
 		goto leave_func;
 	    }
-	    if (Fchgs32(fml, id, 0, cval) < 0) {
-		if (Ferror == FNOSPACE) {
+	    if (Bchgs(ubf, id, 0, cval) < 0) {
+		if (Berror == BNOSPACE) {
 		    /* realloc buffer */
 		}
-		fprintf(stderr, "error in Fchgs() : %s\n", Fstrerror(Ferror));
+		bprintf(stderr, "error in Bchgs() : %s\n", Bstrerror(Berror));
 		goto leave_func;
 	    }		    
 	} else {	    
@@ -192,20 +192,20 @@ FBFR32* dict_to_fml(PyObject* dict) {
 
 		/* !!! type given by field id, not by Python types !!! */		
 
-		fldtype = Fldtype32(id);
+		bfldtype = Bbfldtype(id);
 		
-		switch (fldtype) {
-		case FLD_LONG:
-		    /* convert input to FLD_LONG type */
+		switch (bfldtype) {
+		case BFLD_LONG:
+		    /* convert input to BFLD_LONG type */
 		
 		    if  (PyLong_Check(pyvalue)) {
 			long cval = 0;
-			FLDLEN32 len = sizeof(cval);
+			BFLDLEN len = sizeof(cval);
 			
 			cval = PyLong_AsLong(pyvalue);
 			
-			if (Fchg32(fml, id, oc,(char*) &cval, len) < 0) {
-			    fprintf(stderr, "error in Fchg(): %s\n", Fstrerror(Ferror));
+			if (Bchg(ubf, id, oc,(char*) &cval, len) < 0) {
+			    bprintf(stderr, "error in Bchg(): %s\n", Bstrerror(Berror));
 			    goto leave_func;
 			}		    
 			break;
@@ -213,12 +213,12 @@ FBFR32* dict_to_fml(PyObject* dict) {
 		    
 		    if (PyInt_Check(pyvalue)) {
 			long cval = 0;
-			FLDLEN32 len = sizeof(cval);
+			BFLDLEN len = sizeof(cval);
 			
 			cval = PyInt_AsLong(pyvalue);
 			
-			if (Fchg32(fml, id, oc,(char*) &cval, len) < 0) {
-			    fprintf(stderr, "error in Fchg(): %s\n", Fstrerror(Ferror));
+			if (Bchg(ubf, id, oc,(char*) &cval, len) < 0) {
+			    bprintf(stderr, "error in Bchg(): %s\n", Bstrerror(Berror));
 			    goto leave_func;
 			}		    
 			break;
@@ -234,20 +234,20 @@ FBFR32* dict_to_fml(PyObject* dict) {
 			}
 
 			lval = atol(cval);
-			if (Fchg32(fml, id, oc,(char*) &lval, (FLDLEN32)sizeof(long)) < 0) {
-			    fprintf(stderr, "error in Fchg(): %s\n", Fstrerror(Ferror));
+			if (Bchg(ubf, id, oc,(char*) &lval, (BFLDLEN)sizeof(long)) < 0) {
+			    bprintf(stderr, "error in Bchg(): %s\n", Bstrerror(Berror));
 			    goto leave_func;
 			}		    
 			break;
 		    }
-		    fprintf(stderr, 
-			    "could not convert value for key %s to FML type FLD_LONG\n",
+		    bprintf(stderr, 
+			    "could not convert value for key %s to UBF type BFLD_LONG\n",
 			    key_cstring);
 		    goto leave_func;
 		    break;
-		case FLD_STRING:
+		case BFLD_STRING:
 
-		    /* convert input to FLD_STRING type */
+		    /* convert input to BFLD_STRING type */
 
 		    if (PyFloat_Check(pyvalue)) {
 			double cval = 0.0;
@@ -256,8 +256,8 @@ FBFR32* dict_to_fml(PyObject* dict) {
 			cval = PyFloat_AsDouble(pyvalue);
 			sprintf(string, "%f", cval);
 
-			if (Fchgs32(fml, id, oc, string) < 0) {
-			    fprintf(stderr, "error in Fchgs(): %s\n", Fstrerror(Ferror));
+			if (Bchgs(ubf, id, oc, string) < 0) {
+			    bprintf(stderr, "error in Bchgs(): %s\n", Bstrerror(Berror));
 			    goto leave_func;
 			}		    
 			break;
@@ -270,8 +270,8 @@ FBFR32* dict_to_fml(PyObject* dict) {
 			cval = PyLong_AsLong(pyvalue);
 			sprintf(string, "%ld", cval);
 			
-			if (Fchgs32(fml, id, oc, string) < 0) {
-			    fprintf(stderr, "error in Fchgs(): %s\n", Fstrerror(Ferror));
+			if (Bchgs(ubf, id, oc, string) < 0) {
+			    bprintf(stderr, "error in Bchgs(): %s\n", Bstrerror(Berror));
 			    goto leave_func;
 			}		    
 			break;
@@ -284,8 +284,8 @@ FBFR32* dict_to_fml(PyObject* dict) {
 			cval = PyInt_AsLong(pyvalue);			
 			sprintf(string, "%ld", cval);
 			
-			if (Fchgs32(fml, id, oc, string) < 0) {
-			    fprintf(stderr, "error in Fchgs(): %s\n", Fstrerror(Ferror));
+			if (Bchgs(ubf, id, oc, string) < 0) {
+			    bprintf(stderr, "error in Bchgs(): %s\n", Bstrerror(Berror));
 			    goto leave_func;
 			}		    
 			break;
@@ -299,21 +299,21 @@ FBFR32* dict_to_fml(PyObject* dict) {
 			    goto leave_func;
 			}
 
-			if (Fchgs32(fml, id, oc, cval) < 0) {
-			    fprintf(stderr, "error in Fchgs(): %s\n", Fstrerror(Ferror));
+			if (Bchgs(ubf, id, oc, cval) < 0) {
+			    bprintf(stderr, "error in Bchgs(): %s\n", Bstrerror(Berror));
 			    goto leave_func;
 			}		    
 			break;
 		    }
 
-		    fprintf(stderr, 
-			    "could not convert value for key %s to FML type FLD_STRING\n",
+		    bprintf(stderr, 
+			    "could not convert value for key %s to UBF type BFLD_STRING\n",
 			    key_cstring);
 		    goto leave_func;
 		    
 		    break;
 		default:
-		    fprintf(stderr, "unsupported FML type %d\n", fldtype);
+		    bprintf(stderr, "unsupported UBF type %d\n", bfldtype);
 		    goto leave_func;
 		}
 		/* Not recognized types do not cause an error and are simply discarded */
@@ -323,17 +323,17 @@ FBFR32* dict_to_fml(PyObject* dict) {
     
     
 
-    result = fml;
+    result = ubf;
  leave_func:
     if (keylist) {
 	Py_DECREF(keylist);
     }
     if (!result) {
-	tpfree((char*)fml);
+	tpfree((char*)ubf);
     }
 
 #ifdef DEBUG
-    Fprint32(result);
+    Bprint(result);
 #endif
 
     return result;
@@ -348,7 +348,7 @@ char* pystring_to_string(PyObject* pystring) {
     len = strlen(PyString_AsString(pystring));
 
     if ((string = (char*)tpalloc("STRING", NULL, len+1)) == NULL) {
-	fprintf(stderr, "tpalloc(): %s\n", tpstrerror(tperrno));
+	bprintf(stderr, "tpalloc(): %s\n", tpstrerror(tperrno));
 	goto leave_func;
     }
 
@@ -369,7 +369,7 @@ PyObject* string_to_pystring(char* string) {
     PyObject*     pystring = NULL;
 
     if ((pystring = Py_BuildValue("s", string)) == NULL) {
-	fprintf(stderr, "Py_BuildValue(): %s", string);
+	bprintf(stderr, "Py_BuildValue(): %s", string);
 	goto leave_func;
     }
     

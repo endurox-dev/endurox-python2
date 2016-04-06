@@ -4,13 +4,13 @@ import os
 import string
 import time
 
-from tuxedo.atmi import *
-import tuxedo.reloader
+from endurox.atmi import *
+import endurox.reloader
 
 import pyserver
 
 
-tux = tuxedo.atmi
+ndrx = endurox.atmi
 
 class server:
 	def subscTOUPPER(self, arg):
@@ -61,7 +61,7 @@ class server:
 		print "call TUPPER"
 		tpforward("TOUPPER", arg)
 
-	def service123456789abcdefghijklm(self, arg):   # change FML argument buffer and return it
+	def service123456789abcdefghijklm(self, arg):   # change UBF argument buffer and return it
 		print "call service_1"
 		print arg.keys()
 		arg['TA_OPERATION'][0] = "OK"
@@ -72,13 +72,13 @@ class server:
 	def ping(self, arg):
 		return arg
 
-	def service_3(self, arg):   # get whatever and return new FML buffer (elements are lists)
+	def service_3(self, arg):   # get whatever and return new UBF buffer (elements are lists)
 		print "call service_3"
 
 		return { 'VORNAME': ['Ralf', 'Andreas'], 'NACHNAME': ['Henschkowski'] }
 
 	def service_4(self, arg):
-		print "call service_4"  # return new FML buffer (elements can be strings -> occurence 0)
+		print "call service_4"  # return new UBF buffer (elements can be strings -> occurence 0)
 
 		return { 'VORNAME': 'Ralf_Andreas', 'NACHNAME': ['Henschkowski'] }
 
@@ -105,8 +105,8 @@ class server:
 if __name__ == '__main__': 
 
 	myserver = pyserver.server()   # initial server class instance
-	rel = tuxedo.reloader.Reloader(pyserver, myserver) # dynamic reloader
-	tuxedo.atmi.mainloop(sys.argv, myserver, rel.reloader_func)
+	rel = endurox.reloader.Reloader(pyserver, myserver) # dynamic reloader
+	endurox.atmi.mainloop(sys.argv, myserver, rel.reloader_func)
 
 # Local Variables: 
 # mode:python 

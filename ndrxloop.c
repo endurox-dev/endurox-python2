@@ -1,8 +1,8 @@
 
 /* 
-   This file is an adapted version of the "main" file from the TUXEDO
+   This file is an adapted version of the "main" file from the ENDUROX
    command "buildserver -k ...". The main() function has been removed and replaced
-   by the tux_mainloop() function in the tuxmodule.c file 
+   by the ndrx_mainloop() function in the ndrxmodule.c file 
    
    (c) 1999, 2000 Ralf Henschkowski (ralfh@gmx.ch)
 
@@ -24,12 +24,12 @@ extern int _tmrunserver _((int));
 }
 #endif
 
-extern void tuxedo_dispatch(TPSVCINFO * rqst);
+extern void endurox_dispatch(TPSVCINFO * rqst);
 
 
 
 static struct tmdsptchtbl_t _tmdsptchtbl[] = {
-    { "", "dispatch", (void (*) _((TPSVCINFO *))) tuxedo_dispatch, 0, 0 },  
+    { "", "dispatch", (void (*) _((TPSVCINFO *))) endurox_dispatch, 0, 0 },  
     { NULL, NULL, NULL, 0, 0 }
 };
 

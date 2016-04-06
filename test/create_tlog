@@ -1,6 +1,6 @@
-rm -f %%APPDIR%%/TUXFS
+rm -f %%APPDIR%%/NDRXFS
 tmadmin -c > /dev/null  <<!
-crdl -z %%APPDIR%%/TUXFS 
+crdl -z %%APPDIR%%/NDRXFS 
 q
 !
 tmadmin  > /dev/null  <<!

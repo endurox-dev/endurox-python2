@@ -1,6 +1,6 @@
 import os
 import re
-import tuxedo
+import endurox
 
 
 
@@ -20,7 +20,7 @@ class Reloader:
                 del self.server
                 self.server = self.module.server()
         except:
-                tuxedo.atmi.userlog("can't reload " + `self.module`)
+                endurox.atmi.userlog("can't reload " + `self.module`)
         s=self.server
         return s
 
@@ -36,7 +36,7 @@ class Reloader:
         try:
             mtime_pyc = os.stat(filename_pyc)[9]
         except:
-            tuxedo.atmi.userlog("load_if_modified: exception @ stat (1)")
+            endurox.atmi.userlog("load_if_modified: exception @ stat (1)")
             pass
 
         mtime_py = 0
@@ -45,7 +45,7 @@ class Reloader:
             filename_py = filename_base + ".py"
             mtime_py = os.stat(filename_py)[9]
         except:
-            tuxedo.atmi.userlog("load_if_modified: exception @ stat (2)")
+            endurox.atmi.userlog("load_if_modified: exception @ stat (2)")
             pass
         
         if mtime_py:
