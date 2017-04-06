@@ -1,10 +1,10 @@
 /* 
 
    This file implements a Python extension module for accessing the ATMI API of the
-   BEA ENDUROX Transaction Monitor system. It can be used to build clients or
-   servers in the Python language.  
+   ENDURO/X Middleware. It can be used to build clients or servers in the Python language.  
    
    (c) 1999,2000 Ralf Henschkowski (ralfh@gmx.ch)
+   (c) 2017 Mavimax, SIA
    
 */
 
@@ -21,13 +21,14 @@
 #include <xa.h>                 /* ENDUROX Header File */
 #include <atmi.h>               /* ENDUROX Header File */
 #include "ubf.h"                /* ENDUROX Header File */
-#include <tpadm.h>		/* ENDUROX Header File */
 #include <userlog.h>            /* ENDUROX Header File */
 #include <ubf.h>              /* ENDUROX Header File */
+#include <tpadm.h>
 
 #include <Python.h>
 
 
+#include <ndebug.h>
 #include "ndrxconvert.h"         /* Needed for some helper functions to convert Python 
 				   data types to ENDUROX data types and vice versa */
 
@@ -196,7 +197,7 @@ static PyObject * py_unsol_handler = NULL;
 
 /* **************************************** */
 /*                                          */
-/*     Debinitions of local functions       */
+/*     Definitions of local functions       */
 /*                                          */
 /* **************************************** */
 /* {{{ makeargvobject */
@@ -273,9 +274,7 @@ static int find_free_entry(const char* name) {
     int i ;
     for (i = 0; i < MAX_PY_SERVICES; i++) {
 	if (_registered_services[i].name[0] == '\0' || (!strcmp(_registered_services[i].name, name)) ) {
-#ifdef DEBUG
-	    printf("find returning %d\n", i);
-#endif
+	    NDRX_LOG(log_debug, "find returning %d\n", i);
  	    return i;
 	}
     }
@@ -388,26 +387,28 @@ static PyObject* transform_ndrx_to_py(char* ndrxbuf) {
 
     if (!strcmp(buffer_type, "UBF")) {
 	if ((obj = ubf_to_dict((UBFH*)ndrxbuf)) == NULL) {
-#ifdef DEBUG
-	    bprintf(stderr, "no ubf buffer\n");
-#endif
+
+	    NDRX_LOG(log_debug, "no ubf buffer");
+
 	    goto leave_func;
 	}	
     } else if (!strcmp(buffer_type, "STRING")) {
 	if ((obj = string_to_pystring((char*)ndrxbuf)) == NULL) {
-#ifdef DEBUG
-	    bprintf(stderr, "no string buffer\n");
-#endif
+
+	    NDRX_LOG(log_debug, "no string buffer");
+
 	    goto leave_func;
 	}	
     }	
 
  leave_func:
 
-#ifdef DEBUG
-    PyObject_Print(obj, stdout, 0);
-    printf("\n");
-#endif
+	if (G_ndrx_debug.level>=5)
+	{
+		PyObject_Print(obj, G_ndrx_debug.dbg_f_ptr, 0);
+		fprintf(G_ndrx_debug.dbg_f_ptr, "\n");
+	}
+
     return obj;
 }
 
@@ -435,9 +436,8 @@ mainloop(int argc, char** argv) {
 #ifdef TMMAINEXIT
 #include "mainexit.h"
 #endif
-    int res = 0;
     
-    res = _tmstartserver( argc, argv, _tmgetsvrargs());
+    ndrx_main(argc, argv);
 }
 
 /* }}} */
@@ -485,13 +485,13 @@ ndrx_tpcall(PyObject * self, PyObject * args)
     if ((ndrxbuf = transform_py_to_ndrx(input_py)) == NULL) {
 	goto leave_func;
     }
-#ifdef DEBUG
+
     {
 	char bubfname[200] = "";
 	tptypes(ndrxbuf, bubfname, NULL);
-	bprintf(stderr, "calling tpcall(%s, [%s]...)\n", service_name, bubfname);
+	NDRX_LOG(log_debug, "calling tpcall(%s, [%s]...)", service_name, bubfname);
     }
-#endif
+
     
     if (tpcall(service_name, ndrxbuf, 0, &ndrxbuf, &outlen, flags ) < 0) {
 	char tmp[200] = "";
@@ -548,14 +548,11 @@ ndrx_tpadmcall(PyObject * self, PyObject * args)
       goto leave_func;
     }
       
-
-#ifdef DEBUG
     {
 	char bubfname[200] = "";
 	tptypes(ndrxbuf, bubfname, NULL);
-	bprintf(stderr, "calling tpadmcall([%s]...)\n", bubfname);
+	NDRX_LOG(log_debug, "calling tpadmcall([%s]...)", bubfname);
     }
-#endif
     
     if (tpadmcall((UBFH*)ndrxbuf, (UBFH**)&ndrxbuf, flags ) < 0) {
 	char tmp[200] = "";
@@ -662,7 +659,7 @@ ndrx_tpgetrply(PyObject * self, PyObject * args)
 
     /* Buffer type will be changed by tpgetrply() if necessary */
     if ((ndrxbuf = tpalloc("UBF", NULL, NDRXBUFSIZE)) == NULL) {
-	bprintf(stderr, "tpalloc(): %d - %s\n", tperrno, tpstrerror(tperrno));
+	NDRX_LOG(log_debug, "tpalloc(): %d - %s\n", tperrno, tpstrerror(tperrno));
 	goto leave_func;
     }
 
@@ -674,7 +671,7 @@ ndrx_tpgetrply(PyObject * self, PyObject * args)
     }
     
     if (Binit((UBFH*)ndrxbuf, NDRXBUFSIZE) < 0) {
-	bprintf(stderr, "tpgetrply(): Binit(): %s\n", Bstrerror(Berror));
+	NDRX_LOG(log_debug, "tpgetrply(): Binit(): %s\n", Bstrerror(Berror));
 	goto leave_func;
     }
 
@@ -706,17 +703,15 @@ ndrx_tpgetrply(PyObject * self, PyObject * args)
 static PyObject *
 ndrx_tpforward(PyObject * self, PyObject * args)
 {
-#ifdef DEBUG
-    printf("call ndrx_tpforward()\n");
+    NDRX_LOG(log_debug, "call ndrx_tpforward()");
     PyObject_Print(args, stdout, 0);
-#endif
 
     if (PyArg_ParseTuple(args, "sO", &_forward_service, &_forward_pydata)  < 0) {
 	return NULL;
     }
-#ifdef DEBUG
-    printf("forward to %s", _forward_service);
-#endif /* DEBUG */
+
+    NDRX_LOG(log_debug, "forward to %s", _forward_service);
+
     Py_INCREF(_forward_pydata); 
     _forward++;
 
@@ -908,12 +903,12 @@ ndrx_tprecv(PyObject * self, PyObject * args)
 
     /* Buffer type will be changed by tprecv() if necessary */
     if ((ndrxbuf = tpalloc("UBF", NULL, NDRXBUFSIZE)) == NULL) {
-	bprintf(stderr, "tpalloc(): %d - %s\n", tperrno, tpstrerror(tperrno));
+	NDRX_LOG(log_error, "tpalloc(): %d - %s", tperrno, tpstrerror(tperrno));
 	goto leave_func;
     }
     
     if (Binit((UBFH*)ndrxbuf, NDRXBUFSIZE) < 0) {
-	bprintf(stderr, "Binit(): %s\n", Bstrerror(Berror));
+	NDRX_LOG(log_error, "Binit(): %s", Bstrerror(Berror));
 	goto leave_func;
     }
 
@@ -1258,14 +1253,12 @@ ndrx_tpinit(PyObject * self, PyObject * args)
     TPINIT* ndrxbuf = NULL;
     int idx = 0;
 
-#ifdef DEBUG
-    bprintf(stderr, "entering ndrx_tpinit(args= %x0x) ...\n", args);
-#endif
+    NDRX_LOG(log_debug, "entering ndrx_tpinit(args= %x0x) ...\n", args);
+
     if (args) {
 	if (PyArg_ParseTuple(args, "O|O", &input) < 0) {
-#ifdef DEBUG
-	    bprintf(stderr, "parseTuple (ndrx_tpinit)\n");
-#endif
+
+	    NDRX_LOG(log_debug, "parseTuple (ndrx_tpinit)\n");
 	    goto leave_func;
 	}
     }
@@ -1284,7 +1277,7 @@ ndrx_tpinit(PyObject * self, PyObject * args)
 
 	keylist = PyDict_Keys(input);
 	if (!keylist) {
-	    bprintf(stderr, "tpinit(): PyDict_Keys(keys, %d) returned NULL\n", idx);
+	    NDRX_LOG(log_error, "tpinit(): PyDict_Keys(keys, %d) returned NULL", idx);
 	    goto leave_func;
 
 	}	    
@@ -1296,7 +1289,7 @@ ndrx_tpinit(PyObject * self, PyObject * args)
 
 	    key = PyList_GetItem(keylist, idx);  /* borrowed reference */
 	    if (!key) {
-		bprintf(stderr, "tpinit(): PyList_GetItem(keys, %d) returned NULL\n", idx);
+		NDRX_LOG(log_error, "tpinit(): PyList_GetItem(keys, %d) returned NULL", idx);
 		goto leave_func;
 	    }
 	    key_cstring = PyString_AsString(key);
@@ -1341,12 +1334,12 @@ ndrx_tpinit(PyObject * self, PyObject * args)
 	    }
 	}
     }
-#ifdef DEBUG
-	bprintf(stderr, "calling tpinit()\n");
+
+	NDRX_LOG(log_debug, "calling tpinit()\n");
 	if (ndrxbuf)
-	    bprintf(stderr, "usrname = >%s<, cltname = >%s<\n", 
+	    NDRX_LOG(log_debug, "usrname = >%s<, cltname = >%s<\n", 
 		    ndrxbuf->usrname, ndrxbuf->cltname);
-#endif
+
 	
     if (tpinit(ndrxbuf) < 0) {
 	char tmp[200] = "";
@@ -1366,7 +1359,6 @@ ndrx_tpinit(PyObject * self, PyObject * args)
 
 /* }}} */
 /* {{{ ndrx_tpgetctxt() */
-#if NDRXVERSION >= 7
 static PyObject * 
 ndrx_tpgetctxt(PyObject * self, PyObject * args)
 {
@@ -1401,10 +1393,10 @@ ndrx_tpgetctxt(PyObject * self, PyObject * args)
  leave_func:
     return result;
 }
-#endif /* NDRXVERSION */
+
 /* }}} */
 /* {{{ ndrx_tpsetctxt() */
-#if NDRXVERSION >= 7
+
 static PyObject * 
 ndrx_tpsetctxt(PyObject * self, PyObject * args)
 {
@@ -1445,7 +1437,7 @@ ndrx_tpsetctxt(PyObject * self, PyObject * args)
  leave_func:
     return result;
 }
-#endif /* NDRXVERSION */
+
 /* }}} */
 /* {{{ ndrx_tpchkauth() */
 
@@ -1576,7 +1568,7 @@ static PyObject* ndrx_tpunadvertise(PyObject* self, PyObject* arg) {
 
     if (delete_entry(svc_name) < 0) {
 	PyErr_SetString(PyExc_RuntimeError, "tpunadvertise(): internal data corrupted");
-	bprintf(stderr, "Not found: %s\n", svc_name);
+	NDRX_LOG(log_debug, "Not found: %s", svc_name);
 	goto leave_func;
     }
 
@@ -1624,11 +1616,8 @@ ndrx_tpenqueue(PyObject * self, PyObject * args)
 	}
     }
 
-
-#ifdef DEBUG
-    printf("qspace = %s\n", queue_space);
-    printf("qname  = %s\n", queue_name);
-#endif
+    NDRX_LOG(log_debug, "qspace = %s", queue_space);
+    NDRX_LOG(log_debug, "qname  = %s", queue_name);
 
     if (!queue_space || !queue_name) {
 	PyErr_SetString(PyExc_RuntimeError, "tpenqueue(): No queue name and/or queue space given");
@@ -1660,9 +1649,9 @@ ndrx_tpenqueue(PyObject * self, PyObject * args)
 	/* Convert dictionary to TPQCTL structure */
 	if ((item = PyDict_GetItemString (qctl_obj, "deq_time")) != NULL) {
 	    qctl.deq_time = PyLong_AsLong(item);
-#ifdef DEBUG
-	    printf("deq_time = %d\n", qctl.deq_time);
-#endif
+
+	    NDRX_LOG(log_debug, "deq_time = %d\n", qctl.deq_time);
+
 	    if (!(qctl.flags & TPQTIME_REL) || !(qctl.flags & TPQTIME_ABS)) {
 		qctl.flags |= TPQTIME_ABS;
 	    }
@@ -1670,50 +1659,50 @@ ndrx_tpenqueue(PyObject * self, PyObject * args)
 	if ((item = PyDict_GetItemString (qctl_obj, "priority")) != NULL) {
 	    /* requires flag set in "flags" field */
 	    qctl.priority = PyLong_AsLong(item);
-#ifdef DEBUG
-	    printf("priority = %d\n", qctl.priority);
-#endif
+
+	    NDRX_LOG(log_debug, "priority = %d\n", qctl.priority);
+
 	    qctl.flags |= TPQPRIORITY;
 	}
 	if ((item = PyDict_GetItemString (qctl_obj, "urcode")) != NULL) {
 	    qctl.urcode = PyLong_AsLong(item);
-#ifdef DEBUG
-	    printf("urcode = %d\n", qctl.urcode);
-#endif
+
+	    NDRX_LOG(log_debug, "urcode = %d\n", qctl.urcode);
+
 	}
 	if ((item = PyDict_GetItemString (qctl_obj, "msgid")) != NULL) {
 	    strncpy(qctl.msgid, PyString_AsString(item), TMMSGIDLEN);
-#ifdef DEBUG
-	    printf("msgid = %s\n", qctl.msgid);
-#endif
+
+	    NDRX_LOG(log_debug, "msgid = %s\n", qctl.msgid);
+
 	    qctl.flags |= TPQBEFOREMSGID;
 	}
 	if ((item = PyDict_GetItemString (qctl_obj, "corrid")) != NULL) {
 	    strncpy(qctl.corrid, PyString_AsString(item), TMCORRIDLEN);
-#ifdef DEBUG
-	    printf("corrid = %s\n", qctl.corrid);
-#endif
+
+	    NDRX_LOG(log_debug, "corrid = %s\n", qctl.corrid);
+
 	    qctl.flags |= TPQCORRID;
 	}
 	if ((item = PyDict_GetItemString (qctl_obj, "replyqueue")) != NULL) {
 	    strncpy(qctl.replyqueue, PyString_AsString(item), TMQNAMELEN+1);
-#ifdef DEBUG
-	    printf("replyqueue = %s\n", qctl.replyqueue);
-#endif
+
+	    NDRX_LOG(log_debug, "replyqueue = %s\n", qctl.replyqueue);
+
 	    qctl.flags |= TPQREPLYQ;
 	}
 	if ((item = PyDict_GetItemString (qctl_obj, "failurequeue")) != NULL) {
 	    strncpy(qctl.failurequeue, PyString_AsString(item), TMQNAMELEN+1);
-#ifdef DEBUG
-	    printf("failurequeue = %s\n", qctl.failurequeue);
-#endif
+
+	    NDRX_LOG(log_debug, "failurequeue = %s\n", qctl.failurequeue);
+
 	    qctl.flags |= TPQFAILUREQ;
 	}
 	if ((item = PyDict_GetItemString (qctl_obj, "flags")) != NULL) {
 	    qctl.flags |= PyLong_AsLong(item);
-#ifdef DEBUG
-	    printf("flags = %d\n", qctl.flags);
-#endif
+
+	    NDRX_LOG(log_debug, "flags = %d\n", qctl.flags);
+
 	}
     } 
 
@@ -1744,9 +1733,9 @@ ndrx_tpenqueue(PyObject * self, PyObject * args)
 
     if (qctl.flags & TPQMSGID) {
 	PyObject * item  = NULL;
-#ifdef DEBUG
-	printf("message id = %s\n", qctl.msgid);	
-#endif
+
+	NDRX_LOG(log_debug, "message id = %s\n", qctl.msgid);	
+
         if ((item = Py_BuildValue("s", qctl.msgid)) == NULL) {
 	    goto leave_func;
 	}
@@ -1787,10 +1776,10 @@ ndrx_tpdequeue(PyObject * self, PyObject * args)
 	goto leave_func;
     }	
 
-#ifdef DEBUG
-    printf("qspace = %s\n", queue_space);
-    printf("qname  = %s\n", queue_name);
-#endif
+
+    NDRX_LOG(log_debug, "qspace = %s", queue_space);
+    NDRX_LOG(log_debug, "qname  = %s", queue_name);
+
 
     if (!queue_space || !queue_name) {
 	PyErr_SetString(PyExc_RuntimeError, "tpdequeue(): No queue name and/or queue space given");
@@ -1806,36 +1795,36 @@ ndrx_tpdequeue(PyObject * self, PyObject * args)
 	/* Convert to TPQCTL structure */
 	if ((item = PyDict_GetItemString (qctl_obj, "msgid")) != NULL) { /* borrowed reference */
 	    strncpy(qctl.msgid, PyString_AsString(item), TMMSGIDLEN);
-#ifdef DEBUG
-	    printf("msgid = %s\n", qctl.msgid);
-#endif
+
+	    NDRX_LOG(log_debug, "msgid = %s", qctl.msgid);
+
 	    qctl.flags |= TPQGETBYMSGID;
 	}
 	if ((item = PyDict_GetItemString (qctl_obj, "corrid")) != NULL) {
 	    strncpy(qctl.corrid, PyString_AsString(item), TMCORRIDLEN);
-#ifdef DEBUG
-	    printf("corrid = %s\n", qctl.corrid);
-#endif
+
+	    NDRX_LOG(log_debug, "corrid = %s", qctl.corrid);
+
 	    qctl.flags |= TPQGETBYCORRID;
 	}
 	if ((item = PyDict_GetItemString (qctl_obj, "flags")) != NULL) {
 	    qctl.flags = PyLong_AsLong(item);
-#ifdef DEBUG
-	    printf("flags = %d\n", qctl.flags);
-#endif
+
+	    NDRX_LOG(log_debug, "flags = %d", qctl.flags);
+
 	}
     } 
 
     if ((ndrxbuf = tpalloc("UBF", NULL, NDRXBUFSIZE) ) == NULL) {
-#ifdef DEBUG
-	    printf("%d : tpalloc failed\n", __LINE__);
-#endif
+
+	    NDRX_LOG(log_debug, "%d : tpalloc failed\n", __LINE__);
+
 	goto leave_func;
     }
 
-#ifdef DEBUG
-	    printf("%d : before tpdequeue\n", __LINE__);
-#endif
+
+	    NDRX_LOG(log_debug, "%d : before tpdequeue", __LINE__);
+
     if (tpdequeue(queue_space, queue_name, &qctl, &ndrxbuf, &outlen, flags) < 0) {
 	char tmp[200] = "";
 
@@ -1855,14 +1844,14 @@ ndrx_tpdequeue(PyObject * self, PyObject * args)
 	}
 	    
     }
-#ifdef DEBUG
-	    printf("%d : after tpdequeue\n", __LINE__);
-#endif
+
+	    NDRX_LOG(log_debug, "%d : after tpdequeue", __LINE__);
+
 
     if ((result = transform_ndrx_to_py(ndrxbuf)) == NULL) {
-#ifdef DEBUG
-	    printf("%d : transform_ndrx_to_py failed\n ", __LINE__);
-#endif
+
+	    NDRX_LOG(log_debug, "%d : transform_ndrx_to_py failed ", __LINE__);
+
       
 	goto leave_func;
     }
@@ -1872,45 +1861,45 @@ ndrx_tpdequeue(PyObject * self, PyObject * args)
     
     if (qctl.flags & TPQPRIORITY) {
         if ((item = Py_BuildValue("l", qctl.priority)) == NULL) {
-#ifdef DEBUG
-	    printf("%d : qctl.priority failed\n", __LINE__);
-#endif
+
+	    NDRX_LOG(log_debug, "%d : qctl.priority failed", __LINE__);
+
 	    goto leave_func;
 	}
 	PyDict_SetItemString(qctl_obj, "priority", item);
     }
     if (qctl.flags & TPQMSGID) {
         if ((item = Py_BuildValue("s", qctl.msgid)) == NULL) {
-#ifdef DEBUG
-	    printf("%d : qctl.msgid failed\n", __LINE__);
-#endif
+
+	    NDRX_LOG(log_debug, "%d : qctl.msgid failed", __LINE__);
+
 	    goto leave_func;
 	}
 	PyDict_SetItemString(qctl_obj, "msgid", item);
     }
     if (qctl.flags & TPQCORRID) {
         if ((item = Py_BuildValue("s", qctl.corrid)) == NULL) {
-#ifdef DEBUG
-	    printf("%d : qctl.corrid failed\n", __LINE__);
-#endif
+
+	    NDRX_LOG(log_debug, "%d : qctl.corrid failed", __LINE__);
+
 	    goto leave_func;
 	}
 	PyDict_SetItemString(qctl_obj, "corrid", item);
     }
     if (qctl.flags & TPQREPLYQ) {
         if ((item = Py_BuildValue("s", qctl.replyqueue)) == NULL) {
-#ifdef DEBUG
-	    printf("%d : qctl.replyqueue failed\n", __LINE__);
-#endif
+
+	    NDRX_LOG(log_debug, "%d : qctl.replyqueue failed", __LINE__);
+
 	    goto leave_func;
 	}
 	PyDict_SetItemString(qctl_obj, "replyqueue", item);
     }
     if (qctl.flags & TPQFAILUREQ) {
         if ((item = Py_BuildValue("s", qctl.failurequeue)) == NULL) {
-#ifdef DEBUG
-	    printf("%d :  qctl.failurequeue failed\n", __LINE__);
-#endif
+
+	    NDRX_LOG(log_debug, "%d :  qctl.failurequeue failed", __LINE__);
+
 	    goto leave_func;
 	}
 	PyDict_SetItemString(qctl_obj, "failurequeue", item);
@@ -2001,28 +1990,26 @@ static PyObject* ndrx_tpsubscribe(PyObject* self, PyObject* arg) {
 	
 	if ((item = PyDict_GetItemString (ctl_obj, "name1")) != NULL) { /* borrowed reference */
 	    strncpy(ctl.name1, PyString_AsString(item), 32);
-#ifdef DEBUG
-	    printf("name1 = %s\n", ctl.name1);
-#endif
+
+	    NDRX_LOG(log_debug, "name1 = %s", ctl.name1);
+
 	}
 	if ((item = PyDict_GetItemString (ctl_obj, "name2")) != NULL) { /* borrowed reference */
 	    strncpy(ctl.name2, PyString_AsString(item), 32);
-#ifdef DEBUG
-	    printf("name2 = %s\n", ctl.name2);
-#endif
+
+	    NDRX_LOG(log_debug, "name2 = %s", ctl.name2);
+
 	}
 	if ((item = PyDict_GetItemString (ctl_obj, "flags")) != NULL) {
 	    ctl.flags = PyLong_AsLong(item);
-#ifdef DEBUG
-	    printf("flags = %d\n", ctl.flags);
-#endif
+
+	    NDRX_LOG(log_debug, "flags = %d", ctl.flags);
+
 	}
     }
 
 
-#ifdef DEBUG 
-    printf("calling tpsubscribe(%s, %s, ctl, %d)\n", evt_expr, evt_filter, flags);
-#endif 
+    NDRX_LOG(log_debug, "calling tpsubscribe(%s, %s, ctl, %d)\n", evt_expr, evt_filter, flags);
     
     if ((handle = tpsubscribe(evt_expr, evt_filter, &ctl, flags)) < 0) {
 	char tmp[200] = "";
@@ -2101,9 +2088,9 @@ static PyObject* ndrx_tpnotify(PyObject* self, PyObject* arg) {
     }
 
     if ((clientid_string = PyString_AsString(clientid_py)) == NULL) {
-#ifdef DEBUG
-	bprintf(stderr, "tpnotify(): No client name given \n");
-#endif
+
+	NDRX_LOG(log_debug, "tpnotify(): No client name given");
+
 	goto leave_func;
     }
     
@@ -2199,12 +2186,14 @@ static PyObject* ndrx_tpbroadcast(PyObject* self, PyObject* arg) {
 	goto leave_func;
     }
 
-    if (tpbroadcast(lmid, usrname, cltname, ndrxbuf,  0, flags) == -1) {
+/* EnduroX - not supported.
+    if (tpbroadcast(lmid, usrname, cltname, tuxbuf,  0, flags) == -1) {
 	char tmp[200] = "";
 	sprintf(tmp, "tpbroadcast(): %d - %s", tperrno, tpstrerror(tperrno));
 	PyErr_SetString(PyExc_RuntimeError, tmp);
 	goto leave_func;
     }
+*/
     
     result = PyInt_FromLong((long)tpurcode);
 
@@ -2228,7 +2217,7 @@ static void unsol_handler(char* ndrxbuf, long len, long flags) {
        (only STRING/UBF is supported), flags is not supported by ENDUROX */
 
     if ((data_py = transform_ndrx_to_py(ndrxbuf)) == NULL) {
-	bprintf(stderr, "transform_ndrx_to_py failed\n");
+	NDRX_LOG(log_debug, "transform_ndrx_to_py failed\n");
 	goto leave_func;
     }
 
@@ -2262,6 +2251,8 @@ static PyObject* ndrx_tpsetunsol(PyObject* self, PyObject* arg) {
 	goto leave_func;
     }
 
+#if 0
+	NOT SUPPORTED BY ENDUROX
     if (py_unsol_handler == Py_None) {
 	if (tpsetunsol(NULL) == TPUNSOLERR) {
 	    sprintf(tmp, "tpsetunsol(NULL): %d - %s", tperrno, tpstrerror(tperrno));
@@ -2284,6 +2275,7 @@ static PyObject* ndrx_tpsetunsol(PyObject* self, PyObject* arg) {
 	goto leave_func;
     }
     /* return the old function */
+#endif
     if (old_py_unsol_handler) {
 	result = old_py_unsol_handler;
     } else {
@@ -2379,9 +2371,9 @@ ndrx_mainloop(PyObject * self, PyObject * args)
 
     if (!PyArg_ParseTuple(args, "OOO|O", 
 			  &argv_obj, &_server_obj, &_reloader_function, &xa_switch)) {
-#ifdef DEBUG
-	bprintf(stderr, "parseTuple 2\n");
-#endif
+
+	NDRX_LOG(log_debug, "parseTuple 2");
+
 	return NULL;
     }
 
@@ -2393,21 +2385,20 @@ ndrx_mainloop(PyObject * self, PyObject * args)
     for (i = 0; i < (argc = PyList_Size(argv_obj)); i++) {
 	PyObject* tmp;
 	tmp = PyList_GetItem(argv_obj, i);
-#ifdef DEBUG
+
 	if (PyTuple_Check(tmp)) {
-	    printf("PyTuple detected\n");
+	    NDRX_LOG(log_debug, "PyTuple detected");
 	}
-#endif
+
 	if (PyString_Check(tmp)) {
 	    if (!(argv[i] = PyString_AsString(tmp))) {
-#ifdef DEBUG
-		bprintf(stderr, "argv[%d]: PyString_asString() \n", i);
-#endif
+
+		NDRX_LOG(log_debug, "argv[%d]: PyString_asString()", i);
+
 		return NULL;
 	    }
-#ifdef DEBUG
-		bprintf(stdout, "argv[%d] = %s \n", i, argv[i]);
-#endif
+
+		NDRX_LOG(log_debug, "argv[%d] = %s \n", i, argv[i]);
 
 	}
     } 
@@ -2696,7 +2687,7 @@ void endurox_dispatch(TPSVCINFO * rqst) {
     py_name = PyString_FromString(rqst->name);
     if (py_name) {
 	if (PyObject_SetAttrString(_server_obj, "name", py_name) < 0) {
-	    bprintf(stderr, "PyObject_SetAttrString( name ) error\n");
+	    NDRX_LOG(log_debug, "PyObject_SetAttrString( name ) error\n");
 	}
 	Py_DECREF(py_name); 
 	py_name = NULL;
@@ -2707,7 +2698,7 @@ void endurox_dispatch(TPSVCINFO * rqst) {
     py_cd = PyInt_FromLong(rqst->cd);
     if (py_cd && (rqst->flags & TPCONV)) {
 	if (PyObject_SetAttrString( _server_obj, "cd", py_cd) < 0) {
-	    bprintf(stderr, "PyObject_SetAttrString( cd ) error\n");
+	    NDRX_LOG(log_debug, "PyObject_SetAttrString( cd ) error\n");
 	}
     }
     if (py_cd) { 
@@ -2717,7 +2708,7 @@ void endurox_dispatch(TPSVCINFO * rqst) {
     py_flags = PyLong_FromLong(rqst->flags);
     if (py_flags) {
 	if (PyObject_SetAttrString(_server_obj, "flags", py_flags) < 0) {
-	    bprintf(stderr, "PyObject_SetAttrString( flags ) error\n");
+	    NDRX_LOG(log_debug, "PyObject_SetAttrString( flags ) error\n");
 	}
 	Py_DECREF(py_flags);
 	py_flags = NULL;
@@ -2726,7 +2717,7 @@ void endurox_dispatch(TPSVCINFO * rqst) {
     py_appkey = PyLong_FromLong(rqst->appkey);
     if (py_appkey) {
 	if (PyObject_SetAttrString(_server_obj, "appkey", py_appkey) < 0) {
-	    bprintf(stderr, "PyObject_SetAttrString( appkey ) error\n");
+	    NDRX_LOG(log_debug, "PyObject_SetAttrString( appkey ) error\n");
 	}
 	Py_DECREF(py_appkey);
 	py_appkey = NULL;
@@ -2735,41 +2726,41 @@ void endurox_dispatch(TPSVCINFO * rqst) {
     /* convert CLIENTID to string */
     
     if (tpconvert(cltid_string, (char*)(rqst->cltid).clientdata, TPTOSTRING | TPCONVCLTID) == -1) {
-	bprintf(stderr, "tpconvert(bin_clientid -> string_clientid): %d - %s", tperrno, tpstrerror(tperrno));
+	NDRX_LOG(log_debug, "tpconvert(bin_clientid -> string_clientid): %d - %s", tperrno, tpstrerror(tperrno));
 	tpreturn(TPFAIL, _set_tpurcode, 0, 0L, 0);
     }
 
     py_cltid = PyString_FromString(cltid_string);
     if (py_cltid) {
 	if (PyObject_SetAttrString(_server_obj, "cltid", py_cltid) < 0) {
-	    bprintf(stderr, "PyObject_SetAttrString( cltid ) error\n");
+	    NDRX_LOG(log_debug, "PyObject_SetAttrString( cltid ) error\n");
 	}
 	Py_DECREF(py_cltid); 
 	py_cltid = NULL;
     }
 
     if ((idx=find_entry(rqst->name)) < 0) {
-	bprintf(stderr, "unknown servicename\n");
+	NDRX_LOG(log_debug, "unknown servicename\n");
 	tpreturn(TPFAIL, _set_tpurcode, 0, 0L, 0);
     }
 
 
 #ifdef DEBUG
-    printf("transforming buffer ...\n");
+    NDRX_LOG(log_debug, "transforming buffer ...\n");
 #endif
 
     if ((obj = transform_ndrx_to_py(rqst->data)) == NULL) {
-	bprintf(stderr, "Cannot convert input buffer to a Python type\n");
+	NDRX_LOG(log_debug, "Cannot convert input buffer to a Python type\n");
 	tpreturn(TPFAIL, _set_tpurcode, 0, 0L, 0);
     }
 
 #ifdef DEBUG
-    printf("\ncalling %s/%s ...\n", _registered_services[idx].name, _registered_services[idx].method);
+    NDRX_LOG(log_debug, "\ncalling %s/%s ...\n", _registered_services[idx].name, _registered_services[idx].method);
 #endif
     
     if (!(pydata = PyObject_CallMethod(_server_obj, _registered_services[idx].method, "O", obj))) {
 	Py_XDECREF(obj);
-	bprintf(stderr, "Error calling method %s ...\n", _registered_services[idx].method);
+	NDRX_LOG(log_debug, "Error calling method %s ...\n", _registered_services[idx].method);
 	tpreturn(TPFAIL, _set_tpurcode, 0, 0L, 0);
     }
 
@@ -2779,16 +2770,16 @@ void endurox_dispatch(TPSVCINFO * rqst) {
 
     if (_forward) {
 #ifdef DEBUG
-	printf("endurox_dispatch: forward: %s -> \n", _forward_service);
+	NDRX_LOG(log_debug, "endurox_dispatch: forward: %s -> \n", _forward_service);
 	PyObject_Print(_forward_pydata, stdout, 0);
-	printf("\n");
+	NDRX_LOG(log_debug, "\n");
 #endif
 	Py_XDECREF(pydata); /* don't need the data returned from function call (should be NULL) */
 	pydata = _forward_pydata; /* reference count was incremented by ndrx_tpforward() */
     }
 
 #ifdef DEBUG
-    printf("returning ...\n");
+    NDRX_LOG(log_debug, "returning ...\n");
 #endif
 
     /* If the method call returned an integer, transform it to a Ndrx return
@@ -2808,7 +2799,7 @@ void endurox_dispatch(TPSVCINFO * rqst) {
 	    tp_returncode = TPSUCCESS; 
 	    break;
 	default:
-	    bprintf(stderr, "Unknown integer return code (assuming TPEXIT)");
+	    NDRX_LOG(log_debug, "Unknown integer return code (assuming TPEXIT)");
 	    PyErr_SetString(PyExc_RuntimeError, "Unknown integer return code (assuming TPEXIT)");
 	    tp_returncode = TPEXIT;
 	}
@@ -2827,12 +2818,12 @@ void endurox_dispatch(TPSVCINFO * rqst) {
     
     if (_forward) {
 #ifdef DEBUG
-	printf("call tpforward(%s, ...)\n", _forward_service);
+	NDRX_LOG(log_debug, "call tpforward(%s, ...)\n", _forward_service);
 #endif
 	tpforward(_forward_service, (char*)res_ndrx, 0L, 0);
     } else {
 #ifdef DEBUG
-	printf("call tpreturn(TPSUCCESS, ...)\n");
+	NDRX_LOG(log_debug, "call tpreturn(TPSUCCESS, ...)\n");
 #endif
 	tpreturn(tp_returncode, _set_tpurcode, (char*)res_ndrx, 0L, 0);
     }
