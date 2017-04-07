@@ -5,6 +5,7 @@ Distutils installer for Ndrxmodule / modified setup from m2crypto module
 
 Copyright (c) 1999-2003, Ng Pheng Siong. All rights reserved.
 Copyright (c) 2003-2007, Ralf Henschkowski. All rights reserved.
+Copyright (c) 2017, Mavimax SIA
 
 """
 
@@ -30,20 +31,8 @@ except KeyError:
 ndrxversion = 0  
 
 # auto-detect Endurox version (to link the correct "new" or "old" (pre-7.1) style libs)
-ndrx8 = os.access(os.path.join(endurox_dir, "udataobj", "System.rdp"), os.F_OK)
-status, _ = commands.getstatusoutput("nm %s | grep tpappthr" % (os.path.join(endurox_dir, "lib", "libndrx.a")))
-ndrx10 = not status
-if ndrxversion == 0 and ndrx10 == True:
-    print "*** Building for Endurox Version > 10  ... ***"
-    ndrxversion = 8
-elif ndrxversion == 0 and ndrx8 == True:
-    print "*** Building for Endurox Version > 8  ... ***"
-    ndrxversion = 10
-else:
-    print "*** Building for Endurox 6.x ... ***"
-    ndrxversion = 6
-
-
+ndrx10 = True
+ndrxversion = 10
 
 extra_compile_args = [ ]
 extra_link_args = []
@@ -59,14 +48,7 @@ elif os.name == 'posix':
     include_dirs = [my_inc, endurox_dir + '/include',  '/usr/include']
     library_dirs = [endurox_dir + '/lib', '/usr/lib']
 
-    if ndrxversion < 7:
-	libraries = ['ndrx', 'tmib', 'qm', 'buft', 'ndrx2', 'ubf', 'ubf', 'gp', '/usr/lib/libcrypt.a']
-	libraries_ws = ['wsc', 'buft', 'wsc', 'nws', 'nwi', 'nws', 'ubf', 'ubf', 'gp', 'nsl', 'socket', '/usr/lib/libcrypt.a']
-    else:
-	libraries = ['ndrx', 'tmib', 'buft', 'ubf', 'ubf', '/usr/lib/libcrypt.a']
-	libraries_ws = ['wsc', 'tmib', 'buft', 'ubf', 'ubf', 'gpnet', 'engine', 'dl', 'pthread', '/usr/lib/libcrypt.a']
-	
-
+    libraries = ['atmisrvnomain', 'atmi', 'ubf', 'nstd', 'pthread', 'rt', 'm', '/usr/lib/libcrypt.a']
 
 # For debug purposes only, set if you experience core dumps
 #extra_compile_args.append("-DDEBUG")
@@ -85,26 +67,14 @@ endurox_ext = Extension(name = 'endurox.atmi',
                      extra_link_args = extra_link_args
                      )
 
-endurox_ext_ws = Extension(name = 'endurox.atmiws',
-		     define_macros = [("NDRXWS", 1), 
-				      ("NDRXVERSION", ndrxversion)
-				      ], 
-                     sources = ['ndrxconvert.c', 'ndrxmodule.c' ],
-                     include_dirs = include_dirs,
-                     library_dirs = library_dirs,
-                     libraries = libraries_ws,
-                     extra_compile_args = extra_compile_args,
-                     extra_link_args = extra_link_args
-                     )
-
-for ver in [('endurox', endurox_ext, 'IPC flavour'),('endurox_ws', endurox_ext_ws, 'Network /WS flavour')]:
+for ver in [('endurox', endurox_ext, 'IPC flavour')]:
     setup(name = ver[0],
           version = '1.1',
           description = 'Ndrxmodule: A Python client and server library for use with the Endurox transaction monitor, %s' 
                            %(ver[2],),
           author = 'Ralf Henschkowski',
           author_email = 'ralf.henschkowski@gmail.com',
-          url = 'http://code.google.com/p/ndrxmodule',
+          url = 'https://github.com/endurox-dev/endurox-python2',
           packages = ["endurox"],
           ext_modules = [ver[1]]
           )
