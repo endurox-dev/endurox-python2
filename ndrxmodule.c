@@ -1365,7 +1365,7 @@ ndrx_tpgetctxt(PyObject * self, PyObject * args)
     PyObject * result = NULL;
     PyObject * flags_py = NULL;
 
-    long context = 0;
+    TPCONTEXT_T context = 0;
     long flags = 0;
     int ret = -1;
 
@@ -1404,7 +1404,7 @@ ndrx_tpsetctxt(PyObject * self, PyObject * args)
     PyObject * context_py = NULL;
     PyObject * flags_py = NULL;
 
-    long context = 0;
+    TPCONTEXT_T context = 0;
     long flags = 0;
     int ret = -1;
 
@@ -2251,8 +2251,7 @@ static PyObject* ndrx_tpsetunsol(PyObject* self, PyObject* arg) {
 	goto leave_func;
     }
 
-#if 0
-	NOT SUPPORTED BY ENDUROX
+
     if (py_unsol_handler == Py_None) {
 	if (tpsetunsol(NULL) == TPUNSOLERR) {
 	    sprintf(tmp, "tpsetunsol(NULL): %d - %s", tperrno, tpstrerror(tperrno));
@@ -2275,7 +2274,7 @@ static PyObject* ndrx_tpsetunsol(PyObject* self, PyObject* arg) {
 	goto leave_func;
     }
     /* return the old function */
-#endif
+
     if (old_py_unsol_handler) {
 	result = old_py_unsol_handler;
     } else {
