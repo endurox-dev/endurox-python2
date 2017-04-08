@@ -1,0 +1,66 @@
+The book of the Enduro/X for Python 2
+=====================================
+Madars Vitolins
+v1.0, 2017-04:
+	Initial draft
+:doctype: book
+
+== Introduction
+
+This module is based on open source componentes made for Bea/Oracle Tuxedo.
+The module is ported to Enduro/X and supports almost all of the functionality.
+
+With Python module, it is possible to build
+
+1. Client processes
+
+2. Server processes
+
+== Installation on Linux operating system
+
+
+=== Dependencies
+
+To install the Python module, you need to ensure that Python development
+headers are installed. Otherwise the error like this can appear:
+
+--------------------------------------------------------------------------------
+ #include <Python.h>
+                    ^
+compilation terminated.
+error: command 'arm-linux-gnueabihf-gcc' failed with exit status 1
+Makefile:2: recipe for target 'all' failed
+make: *** [all] Error 1
+
+--------------------------------------------------------------------------------
+
+
+=== Installing Golang on Linux box
+
+--------------------------------------------------------------------------------
+$ git clone https://github.com/endurox-dev/endurox-python2
+$ make
+$ sudo make install
+--------------------------------------------------------------------------------
+
+
+== Conclusions
+
+This document is STUB version.
+
+:numbered!:
+
+[bibliography]
+Additional documentation 
+------------------------
+This section lists additional related documents.
+
+[bibliography]
+.Resources
+- [[[EX_DEVGUIDE]]] Enduro/X Internal Developer Guide.
+
+
+////////////////////////////////////////////////////////////////
+The index is normally left completely empty, it's contents being
+generated automatically by the DocBook toolchain.
+////////////////////////////////////////////////////////////////
