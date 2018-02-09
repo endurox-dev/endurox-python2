@@ -64,92 +64,92 @@ static PyObject * makeargvobject(int argc, char** argv);
 static int find_entry(const char* name);
 static int find_free_entry(const char* name);
 static char* transform_py_to_ndrx(PyObject* res_py);
-static PyObject* transform_ndrx_to_py(char* ndrxbuf);
-static PyObject* ndrx_tppost(PyObject* self, PyObject* arg);
-static PyObject* ndrx_tpsubscribe(PyObject* self, PyObject* arg);
-static PyObject* ndrx_tpunsubscribe(PyObject* self, PyObject* arg);
-static PyObject* ndrx_tpnotify(PyObject* self, PyObject* arg);
-static PyObject* ndrx_tpbroadcast(PyObject* self, PyObject* arg);
-static PyObject* ndrx_tpsetunsol(PyObject* self, PyObject* arg);
-static PyObject* ndrx_tpchkunsol(PyObject* self, PyObject* arg);
+static PyObject* transform_ndrxpy_to_py(char* ndrxbuf);
+static PyObject* ndrxpy_tppost(PyObject* self, PyObject* arg);
+static PyObject* ndrxpy_tpsubscribe(PyObject* self, PyObject* arg);
+static PyObject* ndrxpy_tpunsubscribe(PyObject* self, PyObject* arg);
+static PyObject* ndrxpy_tpnotify(PyObject* self, PyObject* arg);
+static PyObject* ndrxpy_tpbroadcast(PyObject* self, PyObject* arg);
+static PyObject* ndrxpy_tpsetunsol(PyObject* self, PyObject* arg);
+static PyObject* ndrxpy_tpchkunsol(PyObject* self, PyObject* arg);
 static void mainloop(int argc, char** argv);
-static PyObject * ndrx_tpcall(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpacall(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpadmcall(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpforward(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpcall(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpacall(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpadmcall(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpforward(PyObject * self, PyObject * args);
 static PyObject * ndrx_mainloop(PyObject * self, PyObject * args);
-static PyObject* ndrx_tpadvertise(PyObject* self, PyObject* arg);
-static PyObject* ndrx_tpunadvertise(PyObject* self, PyObject* arg);
-static PyObject * ndrx_tpopen(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpclose(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpgetrply(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpconnect(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpsend(PyObject * self, PyObject * args);
-static PyObject * ndrx_tprecv(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpbegin(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpcommit(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpabort(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpsuspend(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpresume(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpgetlev(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpdiscon(PyObject * self, PyObject * args);
-static PyObject * ndrx_userlog(PyObject * self, PyObject * args);
-static PyObject * ndrx_tplog(PyObject * self, PyObject * args);
+static PyObject* ndrxpy_tpadvertise(PyObject* self, PyObject* arg);
+static PyObject* ndrxpy_tpunadvertise(PyObject* self, PyObject* arg);
+static PyObject * ndrxpy_tpopen(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpclose(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpgetrply(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpconnect(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpsend(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tprecv(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpbegin(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpcommit(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpabort(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpsuspend(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpresume(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpgetlev(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpdiscon(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_userlog(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tplog(PyObject * self, PyObject * args);
 static void ins(PyObject *d, char *s, long x);
-static PyObject * ndrx_tpinit(PyObject * self, PyObject * args);
-static PyObject * ndrx_py_tpgetctxt(PyObject * self, PyObject * args);
-static PyObject * ndrx_py_tpsetctxt(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpchkauth(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpterm(PyObject * self, PyObject * args);
-static PyObject* ndrx_get_tpurcode(PyObject* self, PyObject * args);
-static PyObject* ndrx_set_tpurcode(PyObject* self, PyObject * args);
-static PyObject * ndrx_tpenqueue(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpdequeue(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpgetnodeid(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpinit(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpgetctxt(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpsetctxt(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpchkauth(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpterm(PyObject * self, PyObject * args);
+static PyObject* ndrxpy_get_tpurcode(PyObject* self, PyObject * args);
+static PyObject* ndrxpy_set_tpurcode(PyObject* self, PyObject * args);
+static PyObject * ndrxpy_tpenqueue(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpdequeue(PyObject * self, PyObject * args);
+static PyObject * ndrxpy_tpgetnodeid(PyObject * self, PyObject * args);
 
 /* }}} */
 /* {{{ local variables */
 
-static PyMethodDef ndrx_methods[] = {
-    {"tpinit",	         ndrx_tpinit,	    METH_VARARGS, "args: {usrname: '', clt=''}"},
-    {"tpgetctxt",	 ndrx_py_tpgetctxt,	    METH_VARARGS, "args: {} -> context"},
-    {"tpsetctxt",	 ndrx_py_tpsetctxt,	    METH_VARARGS, "args: {context}"},
-    {"tpterm",	         ndrx_tpterm,	    METH_VARARGS},
-    {"tpchkauth",	 ndrx_tpchkauth,	    METH_VARARGS},
-    {"tpcall",	         ndrx_tpcall,	    METH_VARARGS, "args: ('service', {args}|'args')"},
-    {"tpacall",	         ndrx_tpacall,	    METH_VARARGS, "args: ('service', {args}|'args') -> handle"},
-    {"tpconnect",	 ndrx_tpconnect,	    METH_VARARGS, "args: ('service', {args}|'args') -> handle"},
-    {"tpsend",           ndrx_tpsend,        METH_VARARGS, "args: (handle, input, [flags]) -> revent"},
-    {"tpadmcall",	 ndrx_tpadmcall,	    METH_VARARGS, "args: ({args}|'flags')"},
-    {"tpopen",           ndrx_tpopen,	    METH_VARARGS, ""},
-    {"tpclose",          ndrx_tpclose,	    METH_VARARGS, ""},
-    {"tpadvertise",      ndrx_tpadvertise,   METH_VARARGS},
-    {"tpunadvertise",    ndrx_tpunadvertise, METH_VARARGS},
+static PyMethodDef ndrxpy_methods[] = {
+    {"tpinit",	         ndrxpy_tpinit,	    METH_VARARGS, "args: {usrname: '', clt=''}"},
+    {"tpgetctxt",	 ndrxpy_tpgetctxt,	    METH_VARARGS, "args: {} -> context"},
+    {"tpsetctxt",	 ndrxpy_tpsetctxt,	    METH_VARARGS, "args: {context}"},
+    {"tpterm",	         ndrxpy_tpterm,	    METH_VARARGS},
+    {"tpchkauth",	 ndrxpy_tpchkauth,	    METH_VARARGS},
+    {"tpcall",	         ndrxpy_tpcall,	    METH_VARARGS, "args: ('service', {args}|'args')"},
+    {"tpacall",	         ndrxpy_tpacall,	    METH_VARARGS, "args: ('service', {args}|'args') -> handle"},
+    {"tpconnect",	 ndrxpy_tpconnect,	    METH_VARARGS, "args: ('service', {args}|'args') -> handle"},
+    {"tpsend",           ndrxpy_tpsend,        METH_VARARGS, "args: (handle, input, [flags]) -> revent"},
+    {"tpadmcall",	 ndrxpy_tpadmcall,	    METH_VARARGS, "args: ({args}|'flags')"},
+    {"tpopen",           ndrxpy_tpopen,	    METH_VARARGS, ""},
+    {"tpclose",          ndrxpy_tpclose,	    METH_VARARGS, ""},
+    {"tpadvertise",      ndrxpy_tpadvertise,   METH_VARARGS},
+    {"tpunadvertise",    ndrxpy_tpunadvertise, METH_VARARGS},
     {"mainloop",	 ndrx_mainloop,	    METH_VARARGS},
-    {"tpforward",	 ndrx_tpforward,	    METH_VARARGS, "args: ('service', {args}|'args')"},
-    {"tpcommit",         ndrx_tpcommit,	    METH_VARARGS, ""},
-    {"tpabort",          ndrx_tpabort,	    METH_VARARGS, ""},
-    {"tpbegin",          ndrx_tpbegin,	    METH_VARARGS, "args: timeout"},
-    {"tpsuspend",        ndrx_tpsuspend,	    METH_VARARGS, ""},
-    {"tpresume",         ndrx_tpresume,	    METH_VARARGS, ""},
-    {"tpgetlev",         ndrx_tpgetlev,	    METH_VARARGS, ""},
-    {"tprecv",           ndrx_tprecv,	    METH_VARARGS, ""},
-    {"tpdiscon",	 ndrx_tpdiscon,	    METH_VARARGS, ""},
-    {"tpgetrply",	 ndrx_tpgetrply,	    METH_VARARGS, ""},
-    {"tpenqueue",	 ndrx_tpenqueue,	    METH_VARARGS, "args: ('qspace', 'qname', data, {qctl})"},
-    {"tpdequeue",	 ndrx_tpdequeue,	    METH_VARARGS, "args: ('qspace', 'qname', {qctl})"},
-    {"tppost",           ndrx_tppost,        METH_VARARGS},
-    {"tpsubscribe",      ndrx_tpsubscribe,   METH_VARARGS, "args: ('expr', 'filter', {evctl}) -> handle"},
-    {"tpunsubscribe",    ndrx_tpunsubscribe, METH_VARARGS, "args: (handle)"},
-    {"tpnotify",         ndrx_tpnotify,      METH_VARARGS},
-    {"tpbroadcast",      ndrx_tpbroadcast,   METH_VARARGS},
-    {"tpsetunsol",       ndrx_tpsetunsol,    METH_VARARGS},
-    {"tpchkunsol",       ndrx_tpchkunsol,    METH_VARARGS},
-    {"userlog",          ndrx_userlog,       METH_VARARGS},
-    {"tplog",            ndrx_tplog,         METH_VARARGS},
-    {"get_tpurcode",     ndrx_get_tpurcode,  METH_VARARGS},
-    {"set_tpurcode",     ndrx_set_tpurcode,  METH_VARARGS},
-    {"tpgetnodeid",      ndrx_tpgetnodeid,   METH_VARARGS, ""},
+    {"tpforward",	 ndrxpy_tpforward,	    METH_VARARGS, "args: ('service', {args}|'args')"},
+    {"tpcommit",         ndrxpy_tpcommit,	    METH_VARARGS, ""},
+    {"tpabort",          ndrxpy_tpabort,	    METH_VARARGS, ""},
+    {"tpbegin",          ndrxpy_tpbegin,	    METH_VARARGS, "args: timeout"},
+    {"tpsuspend",        ndrxpy_tpsuspend,	    METH_VARARGS, ""},
+    {"tpresume",         ndrxpy_tpresume,	    METH_VARARGS, ""},
+    {"tpgetlev",         ndrxpy_tpgetlev,	    METH_VARARGS, ""},
+    {"tprecv",           ndrxpy_tprecv,	    METH_VARARGS, ""},
+    {"tpdiscon",	 ndrxpy_tpdiscon,	    METH_VARARGS, ""},
+    {"tpgetrply",	 ndrxpy_tpgetrply,	    METH_VARARGS, ""},
+    {"tpenqueue",	 ndrxpy_tpenqueue,	    METH_VARARGS, "args: ('qspace', 'qname', data, {qctl})"},
+    {"tpdequeue",	 ndrxpy_tpdequeue,	    METH_VARARGS, "args: ('qspace', 'qname', {qctl})"},
+    {"tppost",           ndrxpy_tppost,        METH_VARARGS},
+    {"tpsubscribe",      ndrxpy_tpsubscribe,   METH_VARARGS, "args: ('expr', 'filter', {evctl}) -> handle"},
+    {"tpunsubscribe",    ndrxpy_tpunsubscribe, METH_VARARGS, "args: (handle)"},
+    {"tpnotify",         ndrxpy_tpnotify,      METH_VARARGS},
+    {"tpbroadcast",      ndrxpy_tpbroadcast,   METH_VARARGS},
+    {"tpsetunsol",       ndrxpy_tpsetunsol,    METH_VARARGS},
+    {"tpchkunsol",       ndrxpy_tpchkunsol,    METH_VARARGS},
+    {"userlog",          ndrxpy_userlog,       METH_VARARGS},
+    {"tplog",            ndrxpy_tplog,         METH_VARARGS},
+    {"get_tpurcode",     ndrxpy_get_tpurcode,  METH_VARARGS},
+    {"set_tpurcode",     ndrxpy_set_tpurcode,  METH_VARARGS},
+    {"tpgetnodeid",      ndrxpy_tpgetnodeid,   METH_VARARGS, ""},
     {NULL,		 NULL,		    0}
 };
 
@@ -174,7 +174,7 @@ static PyObject*  _server_obj = NULL;
 static PyObject*  _reloader_function = NULL;    
 
 /* Flag indicating that a tpforward() instead of a tpreturn() should be
-   used. See ndrx_tpforward() for details */
+   used. See ndrxpy_tpforward() for details */
 static int _forward = 0;
 
 /* Name of the service to which the request should be forwarded */
@@ -353,7 +353,7 @@ static char* transform_py_to_ndrx(PyObject* res_py) {
 }    
 
 /* }}} */
-/* {{{ transform_ndrx_to_py() */
+/* {{{ transform_ndrxpy_to_py() */
 
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -361,13 +361,13 @@ static char* transform_py_to_ndrx(PyObject* res_py) {
   types (string or dictionary). Currently, only STRING and UBF buffers
   are allowed.
 
-  PyObject* transform_ndrx_to_py  Return: Python object 
+  PyObject* transform_ndrxpy_to_py  Return: Python object 
 
   char* ndrxbuf                   pointer to a ENDUROX typed buffer         :IN
   +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 
-static PyObject* transform_ndrx_to_py(char* ndrxbuf) {
+static PyObject* transform_ndrxpy_to_py(char* ndrxbuf) {
     char buffer_type[100] = "";
     char buffer_subtype[100] = "";
     PyObject* obj = NULL;
@@ -441,10 +441,10 @@ mainloop(int argc, char** argv) {
 #endif /* NDRXWS */
 
 
-/* {{{ ndrx_tpcall() */
+/* {{{ ndrxpy_tpcall() */
 
 static PyObject * 
-ndrx_tpcall(PyObject * self, PyObject * args)
+ndrxpy_tpcall(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * input_py = NULL;
@@ -495,7 +495,7 @@ ndrx_tpcall(PyObject * self, PyObject * args)
 	goto leave_func;
     }
     
-    if ((result = transform_ndrx_to_py(ndrxbuf)) == NULL) {
+    if ((result = transform_ndrxpy_to_py(ndrxbuf)) == NULL) {
 	goto leave_func;
     }
 
@@ -507,10 +507,10 @@ ndrx_tpcall(PyObject * self, PyObject * args)
 /* }}} */
 
 #ifndef NDRXWS
-/* {{{ ndrx_tpadmcall() */
+/* {{{ ndrxpy_tpadmcall() */
 
 static PyObject * 
-ndrx_tpadmcall(PyObject * self, PyObject * args)
+ndrxpy_tpadmcall(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * input_py = NULL;
@@ -558,7 +558,7 @@ ndrx_tpadmcall(PyObject * self, PyObject * args)
     
 
     
-    if ((result = transform_ndrx_to_py(ndrxbuf)) == NULL) {
+    if ((result = transform_ndrxpy_to_py(ndrxbuf)) == NULL) {
 	goto leave_func;
     }
 
@@ -571,11 +571,11 @@ ndrx_tpadmcall(PyObject * self, PyObject * args)
 
 #endif /* NDRXWS */
 
-/* {{{ ndrx_tpacall() */
+/* {{{ ndrxpy_tpacall() */
 
 
 static PyObject * 
-ndrx_tpacall(PyObject * self, PyObject * args)
+ndrxpy_tpacall(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * input_py = NULL;
@@ -634,10 +634,10 @@ ndrx_tpacall(PyObject * self, PyObject * args)
 }
 
 /* }}} */
-/* {{{ ndrx_tpgetrply() */
+/* {{{ ndrxpy_tpgetrply() */
 
 static PyObject * 
-ndrx_tpgetrply(PyObject * self, PyObject * args)
+ndrxpy_tpgetrply(PyObject * self, PyObject * args)
 {
     PyObject * result    = NULL;
     PyObject * flags_py  = NULL;
@@ -681,7 +681,7 @@ ndrx_tpgetrply(PyObject * self, PyObject * args)
 	goto leave_func;
     }
     
-    if ((result = transform_ndrx_to_py(ndrxbuf)) == NULL) {
+    if ((result = transform_ndrxpy_to_py(ndrxbuf)) == NULL) {
 	goto leave_func;
     }
     
@@ -693,12 +693,12 @@ ndrx_tpgetrply(PyObject * self, PyObject * args)
 /* }}} */
 
 #ifndef NDRXWS
-/* {{{ ndrx_tpforward() */
+/* {{{ ndrxpy_tpforward() */
 
 static PyObject *
-ndrx_tpforward(PyObject * self, PyObject * args)
+ndrxpy_tpforward(PyObject * self, PyObject * args)
 {
-    NDRX_LOG(log_debug, "call ndrx_tpforward()");
+    NDRX_LOG(log_debug, "call ndrxpy_tpforward()");
     PyObject_Print(args, stdout, 0);
 
     if (PyArg_ParseTuple(args, "sO", &_forward_service, &_forward_pydata)  < 0) {
@@ -716,10 +716,10 @@ ndrx_tpforward(PyObject * self, PyObject * args)
 
 /* }}} */
 #endif /* NDRXWS */
-/* {{{ ndrx_tpconnect() */
+/* {{{ ndrxpy_tpconnect() */
 
 static PyObject * 
-ndrx_tpconnect(PyObject * self, PyObject * args)
+ndrxpy_tpconnect(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * input = NULL;
@@ -773,10 +773,10 @@ ndrx_tpconnect(PyObject * self, PyObject * args)
 }
 
 /* }}} */
-/* {{{ ndrx_tpdiscon() */
+/* {{{ ndrxpy_tpdiscon() */
 
 static PyObject * 
-ndrx_tpdiscon(PyObject * self, PyObject * args)
+ndrxpy_tpdiscon(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * handle_py = NULL;
@@ -808,10 +808,10 @@ ndrx_tpdiscon(PyObject * self, PyObject * args)
 }
 
 /* }}} */
-/* {{{ ndrx_tpsend() */
+/* {{{ ndrxpy_tpsend() */
 
 static PyObject * 
-ndrx_tpsend(PyObject * self, PyObject * args)
+ndrxpy_tpsend(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * input = NULL;
@@ -862,10 +862,10 @@ ndrx_tpsend(PyObject * self, PyObject * args)
 }
 
 /* }}} */
-/* {{{ ndrx_tprecv() */
+/* {{{ ndrxpy_tprecv() */
 
 static PyObject * 
-ndrx_tprecv(PyObject * self, PyObject * args)
+ndrxpy_tprecv(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * res_tuple = NULL;
@@ -924,7 +924,7 @@ ndrx_tprecv(PyObject * self, PyObject * args)
        TPEV_SVCFAIL, and TPEV_SENDONLY events. Valid events for tprecv() are as follows. */
 
     if ((revent & ( TPEV_SVCSUCC | TPEV_SVCFAIL | TPEV_SENDONLY))) {
-	if ((len > 0) && (result = transform_ndrx_to_py(ndrxbuf)) == NULL) {
+	if ((len > 0) && (result = transform_ndrxpy_to_py(ndrxbuf)) == NULL) {
 	    goto leave_func;
 	}
     }
@@ -942,9 +942,9 @@ ndrx_tprecv(PyObject * self, PyObject * args)
 
 /* }}} */
 #ifndef NDRXWS
-/* {{{ ndrx_tpopen() */
+/* {{{ ndrxpy_tpopen() */
 
-static PyObject* ndrx_tpopen(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_tpopen(PyObject* self, PyObject* arg) {
 
     PyObject * result         = NULL;
 
@@ -965,9 +965,9 @@ static PyObject* ndrx_tpopen(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-/* {{{ ndrx_tpclose() */
+/* {{{ ndrxpy_tpclose() */
 
-static PyObject* ndrx_tpclose(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_tpclose(PyObject* self, PyObject* arg) {
 
     PyObject * result         = NULL;
     int ret      = -1;
@@ -988,9 +988,9 @@ static PyObject* ndrx_tpclose(PyObject* self, PyObject* arg) {
 
 /* }}} */
 #endif /* NDRXWS */
-/* {{{ ndrx_tpbegin() */
+/* {{{ ndrxpy_tpbegin() */
 
-static PyObject* ndrx_tpbegin(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_tpbegin(PyObject* self, PyObject* arg) {
 
     PyObject * result         = NULL;
     PyObject * timeout_py     = NULL;
@@ -1045,9 +1045,9 @@ static PyObject* ndrx_tpbegin(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-/* {{{ ndrx_tpcommit() */
+/* {{{ ndrxpy_tpcommit() */
 
-static PyObject* ndrx_tpcommit(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_tpcommit(PyObject* self, PyObject* arg) {
 
     PyObject * result         = NULL;
     PyObject * flags_py       = NULL;
@@ -1085,9 +1085,9 @@ static PyObject* ndrx_tpcommit(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-/* {{{ ndrx_tpabort() */
+/* {{{ ndrxpy_tpabort() */
 
-static PyObject* ndrx_tpabort(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_tpabort(PyObject* self, PyObject* arg) {
 
     PyObject * result         = NULL;
     PyObject * flags_py       = NULL;
@@ -1123,9 +1123,9 @@ static PyObject* ndrx_tpabort(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-/* {{{ ndrx_tpsuspend() */
+/* {{{ ndrxpy_tpsuspend() */
 
-static PyObject* ndrx_tpsuspend(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_tpsuspend(PyObject* self, PyObject* arg) {
 
     PyObject * result         = NULL; 
     PyObject * flags_py       = NULL;
@@ -1175,9 +1175,9 @@ static PyObject* ndrx_tpsuspend(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-/* {{{ ndrx_tpresume() */
+/* {{{ ndrxpy_tpresume() */
 
-static PyObject* ndrx_tpresume(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_tpresume(PyObject* self, PyObject* arg) {
 
     int ret    = -1;
     long flags = 0;
@@ -1216,9 +1216,9 @@ static PyObject* ndrx_tpresume(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-/* {{{ ndrx_tpgetlev() */
+/* {{{ ndrxpy_tpgetlev() */
 
-static PyObject* ndrx_tpgetlev(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_tpgetlev(PyObject* self, PyObject* arg) {
 
     int ret    = -1;
     PyObject * result         = NULL;
@@ -1238,22 +1238,22 @@ static PyObject* ndrx_tpgetlev(PyObject* self, PyObject* arg) {
 
 /* }}} */
 
-/* {{{ ndrx_tpinit() */
+/* {{{ ndrxpy_tpinit() */
 
 static PyObject * 
-ndrx_tpinit(PyObject * self, PyObject * args)
+ndrxpy_tpinit(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * input = NULL;
     TPINIT* ndrxbuf = NULL;
     int idx = 0;
 
-    NDRX_LOG(log_debug, "entering ndrx_tpinit(args= %x0x) ...\n", args);
+    NDRX_LOG(log_debug, "entering ndrxpy_tpinit(args= %x0x) ...\n", args);
 
     if (args) {
 	if (PyArg_ParseTuple(args, "O|O", &input) < 0) {
 
-	    NDRX_LOG(log_debug, "parseTuple (ndrx_tpinit)");
+	    NDRX_LOG(log_debug, "parseTuple (ndrxpy_tpinit)");
 	    goto leave_func;
 	}
     }
@@ -1353,9 +1353,9 @@ ndrx_tpinit(PyObject * self, PyObject * args)
 }
 
 /* }}} */
-/* {{{ ndrx_py_tpgetctxt() */
+/* {{{ ndrxpy_tpgetctxt() */
 static PyObject * 
-ndrx_py_tpgetctxt(PyObject * self, PyObject * args)
+ndrxpy_tpgetctxt(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * flags_py = NULL;
@@ -1390,10 +1390,10 @@ ndrx_py_tpgetctxt(PyObject * self, PyObject * args)
 }
 
 /* }}} */
-/* {{{ ndrx_py_tpsetctxt() */
+/* {{{ ndrxpy_tpsetctxt() */
 
 static PyObject * 
-ndrx_py_tpsetctxt(PyObject * self, PyObject * args)
+ndrxpy_tpsetctxt(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * context_py = NULL;
@@ -1434,9 +1434,9 @@ ndrx_py_tpsetctxt(PyObject * self, PyObject * args)
 }
 
 /* }}} */
-/* {{{ ndrx_tpchkauth() */
+/* {{{ ndrxpy_tpchkauth() */
 
-static PyObject* ndrx_tpchkauth(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_tpchkauth(PyObject* self, PyObject* arg) {
 
     PyObject * result         = NULL;
     int ret = -1;
@@ -1455,10 +1455,10 @@ static PyObject* ndrx_tpchkauth(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-/* {{{ ndrx_tpterm() */
+/* {{{ ndrxpy_tpterm() */
 
 static PyObject * 
-ndrx_tpterm(PyObject * self, PyObject * args)
+ndrxpy_tpterm(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     
@@ -1479,9 +1479,9 @@ ndrx_tpterm(PyObject * self, PyObject * args)
 
 /* }}} */
 #ifndef NDRXWS
-/* {{{ ndrx_tpadvertise() */
+/* {{{ ndrxpy_tpadvertise() */
 
-static PyObject* ndrx_tpadvertise(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_tpadvertise(PyObject* self, PyObject* arg) {
     int idx = 0;
     char * service_name   = NULL;
     char * method_name    = NULL;
@@ -1534,9 +1534,9 @@ static PyObject* ndrx_tpadvertise(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-/* {{{ ndrx_tpunadvertise() */
+/* {{{ ndrxpy_tpunadvertise() */
 
-static PyObject* ndrx_tpunadvertise(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_tpunadvertise(PyObject* self, PyObject* arg) {
     char * svc_name = NULL;
     PyObject * result = NULL;
 
@@ -1574,10 +1574,10 @@ static PyObject* ndrx_tpunadvertise(PyObject* self, PyObject* arg) {
 
 /* }}} */
 #endif /* NDRXWS */
-/* {{{ ndrx_tpenqueue() */
+/* {{{ ndrxpy_tpenqueue() */
 
 static PyObject * 
-ndrx_tpenqueue(PyObject * self, PyObject * args)
+ndrxpy_tpenqueue(PyObject * self, PyObject * args)
 {
     PyObject * result   = NULL;
     PyObject * flags_py = NULL;
@@ -1745,10 +1745,10 @@ ndrx_tpenqueue(PyObject * self, PyObject * args)
 }
 
 /* }}} */
-/* {{{ ndrx_tpdequeue() */
+/* {{{ ndrxpy_tpdequeue() */
 
 static PyObject * 
-ndrx_tpdequeue(PyObject * self, PyObject * args)
+ndrxpy_tpdequeue(PyObject * self, PyObject * args)
 {
     PyObject * result   = NULL;
     PyObject * flags_py = NULL;
@@ -1843,9 +1843,9 @@ ndrx_tpdequeue(PyObject * self, PyObject * args)
 	    NDRX_LOG(log_debug, "%d : after tpdequeue", __LINE__);
 
 
-    if ((result = transform_ndrx_to_py(ndrxbuf)) == NULL) {
+    if ((result = transform_ndrxpy_to_py(ndrxbuf)) == NULL) {
 
-	    NDRX_LOG(log_debug, "%d : transform_ndrx_to_py failed ", __LINE__);
+	    NDRX_LOG(log_debug, "%d : transform_ndrxpy_to_py failed ", __LINE__);
 
       
 	goto leave_func;
@@ -1909,9 +1909,9 @@ ndrx_tpdequeue(PyObject * self, PyObject * args)
 
 /* }}} */
 
-/* {{{ ndrx_tppost() */
+/* {{{ ndrxpy_tppost() */
 
-static PyObject* ndrx_tppost(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_tppost(PyObject* self, PyObject* arg) {
 
     PyObject * result   = NULL;
     PyObject * flags_py = NULL;
@@ -1958,9 +1958,9 @@ static PyObject* ndrx_tppost(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-/* {{{ ndrx_tpsubscribe() */
+/* {{{ ndrxpy_tpsubscribe() */
 
-static PyObject* ndrx_tpsubscribe(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_tpsubscribe(PyObject* self, PyObject* arg) {
 
     PyObject * result       = NULL;
     PyObject * flags_py     = NULL;
@@ -2023,9 +2023,9 @@ static PyObject* ndrx_tpsubscribe(PyObject* self, PyObject* arg) {
 
 
 
-/* {{{ ndrx_tpunsubscribe() */
+/* {{{ ndrxpy_tpunsubscribe() */
 
-static PyObject* ndrx_tpunsubscribe(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_tpunsubscribe(PyObject* self, PyObject* arg) {
 
     PyObject * result   = NULL;
     PyObject * flags_py = NULL;
@@ -2059,9 +2059,9 @@ static PyObject* ndrx_tpunsubscribe(PyObject* self, PyObject* arg) {
 
 /* }}} */
 
-/* {{{ ndrx_tpnotify() */
+/* {{{ ndrxpy_tpnotify() */
 
-static PyObject* ndrx_tpnotify(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_tpnotify(PyObject* self, PyObject* arg) {
 
     PyObject * result      = NULL;
     PyObject * clientid_py = NULL;
@@ -2119,9 +2119,9 @@ static PyObject* ndrx_tpnotify(PyObject* self, PyObject* arg) {
 }
 
 /* }}} */
-/* {{{ ndrx_tpbroadcast() */
+/* {{{ ndrxpy_tpbroadcast() */
 
-static PyObject* ndrx_tpbroadcast(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_tpbroadcast(PyObject* self, PyObject* arg) {
 
     PyObject * result      = NULL;
     PyObject * data_py     = NULL;
@@ -2203,7 +2203,7 @@ static PyObject* ndrx_tpbroadcast(PyObject* self, PyObject* arg) {
 
 /* }}} */
 
-/* {{{ ndrx_tpsetunsol() */
+/* {{{ ndrxpy_tpsetunsol() */
 
 /* This function is the message handler that is called from the ENDUROX
    libraries. It calls the user-specified Python callable object */
@@ -2215,8 +2215,8 @@ static void unsol_handler(char* ndrxbuf, long len, long flags) {
     /* Transform the ENDUROX buffer to a Python type (len is not needed
        (only STRING/UBF is supported), flags is not supported by ENDUROX */
 
-    if ((data_py = transform_ndrx_to_py(ndrxbuf)) == NULL) {
-	NDRX_LOG(log_debug, "transform_ndrx_to_py failed");
+    if ((data_py = transform_ndrxpy_to_py(ndrxbuf)) == NULL) {
+	NDRX_LOG(log_debug, "transform_ndrxpy_to_py failed");
 	goto leave_func;
     }
 
@@ -2233,7 +2233,7 @@ static void unsol_handler(char* ndrxbuf, long len, long flags) {
 }
 
 
-static PyObject* ndrx_tpsetunsol(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_tpsetunsol(PyObject* self, PyObject* arg) {
     char tmp[200] = "";
     PyObject * result = NULL;
     PyObject * old_py_unsol_handler;
@@ -2285,9 +2285,9 @@ static PyObject* ndrx_tpsetunsol(PyObject* self, PyObject* arg) {
     return result; 
 }
 /* }}} */
-/* {{{ ndrx_tpchkunsol() */
+/* {{{ ndrxpy_tpchkunsol() */
 
-static PyObject* ndrx_tpchkunsol(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_tpchkunsol(PyObject* self, PyObject* arg) {
     PyObject * result = NULL;
     long num_evts = 0;
 
@@ -2306,10 +2306,10 @@ static PyObject* ndrx_tpchkunsol(PyObject* self, PyObject* arg) {
 
 /* }}} */
 
-/* {{{ ndrx_userlog() */
+/* {{{ ndrxpy_userlog() */
 
 static PyObject * 
-ndrx_userlog(PyObject * self, PyObject * arg)
+ndrxpy_userlog(PyObject * self, PyObject * arg)
 {
     PyObject * result = NULL;
     char * log_string  = NULL;
@@ -2331,10 +2331,10 @@ ndrx_userlog(PyObject * self, PyObject * arg)
 
 /* }}} */
 
-/* {{{ ndrx_tplog() */
+/* {{{ ndrxpy_tplog() */
 
 static PyObject * 
-ndrx_tplog(PyObject * self, PyObject * arg)
+ndrxpy_tplog(PyObject * self, PyObject * arg)
 {
     PyObject * result = NULL;
     
@@ -2359,18 +2359,18 @@ ndrx_tplog(PyObject * self, PyObject * arg)
 /* }}} */
 
 
-/* {{{ ndrx_get_tpurcode() */
+/* {{{ ndrxpy_get_tpurcode() */
 
-static PyObject* ndrx_get_tpurcode(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_get_tpurcode(PyObject* self, PyObject* arg) {
     PyObject * result = NULL;
     result = PyInt_FromLong((long)tpurcode); /* tpurcode is thread-specific */
     return result; 
 }
 
 /* }}} */
-/* {{{ ndrx_set_tpurcode() */
+/* {{{ ndrxpy_set_tpurcode() */
 
-static PyObject* ndrx_set_tpurcode(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_set_tpurcode(PyObject* self, PyObject* arg) {
     PyObject * result = NULL;
     if (!PyArg_ParseTuple(arg, "l", &_set_tpurcode)) {
 	result = NULL;
@@ -2463,9 +2463,9 @@ PyMODINIT_FUNC
 
     /* Create the module and add the functions */
 #ifndef NDRXWS    
-    m = Py_InitModule("atmi", ndrx_methods);
+    m = Py_InitModule("atmi", ndrxpy_methods);
 #else
-    m = Py_InitModule("atmiws", ndrx_methods);
+    m = Py_InitModule("atmiws", ndrxpy_methods);
 #endif /* NDRXWS */
 
     /* Add some symbolic constants to the module */
@@ -2653,9 +2653,9 @@ tpsvrdone(void)
 /* }}} */
 
 
-/* {{{ ndrx_tpgetnodeid() */
+/* {{{ ndrxpy_tpgetnodeid() */
 
-static PyObject* ndrx_tpgetnodeid(PyObject* self, PyObject* arg) {
+static PyObject* ndrxpy_tpgetnodeid(PyObject* self, PyObject* arg) {
 
     PyObject * result         = NULL;
     int ret      = -1;
@@ -2798,7 +2798,7 @@ void endurox_dispatch(TPSVCINFO * rqst) {
 
     NDRX_LOG(log_debug, "transforming buffer ...");
 
-    if ((obj = transform_ndrx_to_py(rqst->data)) == NULL) {
+    if ((obj = transform_ndrxpy_to_py(rqst->data)) == NULL) {
 	NDRX_LOG(log_debug, "Cannot convert input buffer to a Python type");
 	tpreturn(TPFAIL, _set_tpurcode, 0, 0L, 0);
     }
@@ -2824,7 +2824,7 @@ void endurox_dispatch(TPSVCINFO * rqst) {
 	NDRX_LOG(log_debug, "");
 
 	Py_XDECREF(pydata); /* don't need the data returned from function call (should be NULL) */
-	pydata = _forward_pydata; /* reference count was incremented by ndrx_tpforward() */
+	pydata = _forward_pydata; /* reference count was incremented by ndrxpy_tpforward() */
     }
 
 
