@@ -119,7 +119,8 @@ PyObject* ubf_to_dict(UBFH* ubf) {
 			{
 				PyObject* pyval;
 				BFLDLEN stringlen  = ATMI_MSG_MAX_SIZE;
-				char stringval[ATMI_MSG_MAX_SIZE] = "";
+				char stringval[ATMI_MSG_MAX_SIZE];
+                                stringval[0]=EXEOS;
 				Bget(ubf, id, oc, (char*)&stringval, &stringlen);
 				pyval = Py_BuildValue("s", stringval);
 				PyList_Append(list, pyval);

@@ -97,8 +97,8 @@ static PyObject * ndrx_userlog(PyObject * self, PyObject * args);
 static PyObject * ndrx_tplog(PyObject * self, PyObject * args);
 static void ins(PyObject *d, char *s, long x);
 static PyObject * ndrx_tpinit(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpgetctxt(PyObject * self, PyObject * args);
-static PyObject * ndrx_tpsetctxt(PyObject * self, PyObject * args);
+static PyObject * ndrx_py_tpgetctxt(PyObject * self, PyObject * args);
+static PyObject * ndrx_py_tpsetctxt(PyObject * self, PyObject * args);
 static PyObject * ndrx_tpchkauth(PyObject * self, PyObject * args);
 static PyObject * ndrx_tpterm(PyObject * self, PyObject * args);
 static PyObject* ndrx_get_tpurcode(PyObject* self, PyObject * args);
@@ -112,8 +112,8 @@ static PyObject * ndrx_tpgetnodeid(PyObject * self, PyObject * args);
 
 static PyMethodDef ndrx_methods[] = {
     {"tpinit",	         ndrx_tpinit,	    METH_VARARGS, "args: {usrname: '', clt=''}"},
-    {"tpgetctxt",	 ndrx_tpgetctxt,	    METH_VARARGS, "args: {} -> context"},
-    {"tpsetctxt",	 ndrx_tpsetctxt,	    METH_VARARGS, "args: {context}"},
+    {"tpgetctxt",	 ndrx_py_tpgetctxt,	    METH_VARARGS, "args: {} -> context"},
+    {"tpsetctxt",	 ndrx_py_tpsetctxt,	    METH_VARARGS, "args: {context}"},
     {"tpterm",	         ndrx_tpterm,	    METH_VARARGS},
     {"tpchkauth",	 ndrx_tpchkauth,	    METH_VARARGS},
     {"tpcall",	         ndrx_tpcall,	    METH_VARARGS, "args: ('service', {args}|'args')"},
@@ -1353,9 +1353,9 @@ ndrx_tpinit(PyObject * self, PyObject * args)
 }
 
 /* }}} */
-/* {{{ ndrx_tpgetctxt() */
+/* {{{ ndrx_py_tpgetctxt() */
 static PyObject * 
-ndrx_tpgetctxt(PyObject * self, PyObject * args)
+ndrx_py_tpgetctxt(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * flags_py = NULL;
@@ -1390,10 +1390,10 @@ ndrx_tpgetctxt(PyObject * self, PyObject * args)
 }
 
 /* }}} */
-/* {{{ ndrx_tpsetctxt() */
+/* {{{ ndrx_py_tpsetctxt() */
 
 static PyObject * 
-ndrx_tpsetctxt(PyObject * self, PyObject * args)
+ndrx_py_tpsetctxt(PyObject * self, PyObject * args)
 {
     PyObject * result = NULL;
     PyObject * context_py = NULL;
